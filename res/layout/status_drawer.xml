@@ -1,0 +1,99 @@
+<?xml version="1.0"
+encoding="UTF-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:widget="http://schemas.android.com/apk/res/com.nexlink.statusbar"
+xmlns:tools="http://schemas.android.com/tools"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+ android:background="#000000FF"
+tools:context=".MainActivity"
+android:id="@+id/home_view">
+   <com.nexlink.statusbar.SlidingDrawer
+      android:id="@+id/status_drawer"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      android:background="#00000000"
+      widget:handle="@+id/status_handle"
+      widget:content="@+id/content2"
+      widget:orientation="1">
+      <LinearLayout android:orientation="horizontal"
+         android:id="@+id/status_handle"
+         android:layout_width="match_parent"
+         android:layout_height="30dp"
+         android:background="@drawable/status_bar_close_on"/>
+         <LinearLayout android:orientation="vertical"
+         android:id="@+id/content2"
+         android:layout_width="match_parent"
+         android:layout_height="match_parent"
+         android:layout_weight="1"
+         android:background="#D8000000">
+             <TabHost
+    android:id="@+id/tabhost"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+            <TabWidget
+            android:id="@android:id/tabs"
+            android:layout_width="match_parent"
+            android:layout_height="75dp" />
+    <FrameLayout android:id="@android:id/tabcontent"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            >
+    <LinearLayout android:id="@+id/nl"
+        android:orientation="vertical"
+        android:layout_marginTop="75dp"
+         android:layout_width="match_parent"
+         android:layout_height="match_parent">
+ "
+          <Button
+          android:id="@+id/clear_button"
+    android:layout_width="match_parent"
+    android:layout_height="50dp"
+    android:text="Clear"></Button>
+      <ListView android:id="@+id/notifications_list"
+         android:layout_width="match_parent"
+         android:layout_height="match_parent">
+      </ListView>
+      </LinearLayout>
+              <LinearLayout android:id="@+id/settings_list"
+                  android:orientation="vertical"
+                  android:layout_marginTop="75dp"
+         android:layout_width="match_parent"
+         android:layout_height="match_parent">
+      
+         <GridView android:id="@+id/options_grid"
+             android:layout_width="match_parent"
+         android:layout_height="match_parent"
+         android:numColumns="3"
+        android:verticalSpacing="3dp"
+        android:horizontalSpacing="3dp"
+             ></GridView>
+     <Button
+    android:id="@+id/power_button"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+     android:layout_gravity="left|top"
+    android:text="Display"/>
+     <Button 
+    android:id="@+id/wifi_button"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+     android:layout_gravity="left|top"
+    android:text="Wifi"/>
+     <Button 
+    android:id="@+id/bluetooth_button"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+     android:layout_gravity="left|top"
+    android:text="Bluetooth"/>        
+      <TextView
+    android:layout_height="wrap_content"
+    android:layout_width="match_parent"
+    android:text="Android Settings"
+    style="?android:attr/listSeparatorTextViewStyle" />
+      </LinearLayout>
+    </FrameLayout>
+</TabHost>
+      </LinearLayout>
+   </com.nexlink.statusbar.SlidingDrawer>
+</RelativeLayout>

@@ -1,0 +1,50 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="${packageName}.${activityClass}" >
+  <LinearLayout android:orientation="vertical"
+         android:id="@+id/content2"
+         android:layout_width="match_parent"
+         android:layout_height="match_parent"
+         android:layout_weight="1">
+    <TabHost
+    android:id="@+id/tabhost"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+      <TabWidget
+            android:id="@android:id/tabs"
+            android:layout_width="match_parent"
+             android:layout_height="75dp"/>
+      <FrameLayout
+            android:id="@android:id/tabcontent"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            >
+        <LinearLayout
+        android:id="@+id/package_select_user_listview_container"
+        android:orientation="vertical"
+         android:layout_width="match_parent"
+         android:layout_height="match_parent"
+         android:layout_marginTop="75dp">
+          <ListView android:id="@+id/package_select_user_list"
+         android:layout_width="match_parent"
+         android:layout_height="match_parent">
+        </ListView>
+      </LinearLayout>
+        <LinearLayout
+            android:id="@+id/package_select_system_listview_container"
+                  android:orientation="vertical"
+         android:layout_width="match_parent"
+         android:layout_height="match_parent"
+         android:layout_marginTop="75dp">
+          <ListView android:id="@+id/package_select_system_list"
+         android:layout_width="match_parent"
+         android:layout_height="match_parent">
+        </ListView>
+      </LinearLayout>
+    </FrameLayout>
+  </TabHost>
+</LinearLayout>
+</RelativeLayout>
+

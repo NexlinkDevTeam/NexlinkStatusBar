@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+    <PreferenceCategory
+            android:title="General">            
+        <CheckBoxPreference
+                android:key="generalEnabled"
+                android:defaultValue="true"
+                android:title="Enable Status Bar"
+                android:summary="Use a custom status bar" />
+         <CheckBoxPreference
+                android:key="generalOpenable"
+                android:defaultValue="true"
+                android:title="Open Status Bar"
+                android:summary="Allow status bar to be opened" />
+    </PreferenceCategory>           
+    <PreferenceCategory
+            android:title="Notifications">
+ <CheckBoxPreference
+                android:key="notificationsEnabled"
+                android:defaultValue="true"
+                android:dependency="generalEnabled"
+                android:title="Enable Notifications"
+                android:summary="Enable notifications" />
+        <CheckBoxPreference
+                android:key="notificationsWhitelisting"
+                android:defaultValue="false"
+                android:dependency="notificationsEnabled"
+                android:title="Whitelist Notifications"
+                android:summary="Allow only selected apps to display notifications"/>
+  
+        <Preference 
+                android:title="Choose Apps"
+                android:key="selectPackages"
+                android:dependency="notificationsWhitelisting"
+                android:summary="Tap here to choose which apps can display notifications"/>
+    </PreferenceCategory>
+ 
+    <PreferenceCategory
+            android:title="Display">
+
+        <PreferenceScreen
+                android:title="Icons"
+                android:dependency="generalEnabled"
+                android:summary="Choose which icons are visible on the status bar">
+ <CheckBoxPreference
+     android:key="iconsTime"
+                android:defaultValue="true"
+                android:title="Time"/>
+  <CheckBoxPreference
+      android:key="iconsBattery"
+                android:defaultValue="true"
+                android:title="Battery"/>
+   <CheckBoxPreference
+       android:key="iconsSignal"
+                android:defaultValue="true"
+                android:title="Signal"/>
+    <CheckBoxPreference
+        android:key="iconsWifi"
+                android:defaultValue="true"
+                android:title="Wifi"/>
+     <CheckBoxPreference
+         android:key="iconsBluetooth"
+                android:defaultValue="true"
+                android:title="Bluetooth"/>
+     <CheckBoxPreference
+         android:key="iconsNotification"
+                android:defaultValue="true"
+                android:title="Notification"/>
+        </PreferenceScreen>
+        <PreferenceScreen
+                android:title="User Settings"
+                android:dependency="generalEnabled"
+                android:summary="Choose which Android settings can be accessed  from the status bar">
+ <CheckBoxPreference
+                android:key="optionsDisplay"
+                android:defaultValue="true"
+                android:title="Display"/>
+  <CheckBoxPreference
+      android:key="optionsWifi"
+                android:defaultValue="true"
+                android:title="Wifi"/>
+   <CheckBoxPreference
+       android:key="optionsBluetooth"
+                android:defaultValue="true"
+                android:title="Bluetooth"/>
+        </PreferenceScreen>
+    </PreferenceCategory>
+             <Preference android:title="Restart"
+                android:key="restart"
+                android:summary="Tap here to restart with these settings"/>
+             <Preference android:title="Start"
+                android:key="start"
+                android:summary="Start the service"/>
+             <Preference android:title="Stop"
+                android:key="stop"
+                android:summary="Stop the service"/>
+</PreferenceScreen>         
