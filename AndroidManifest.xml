@@ -22,45 +22,73 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATIONS"/> <!-- System permission needed for API < 18 -->
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"/>
+    <uses-permission android:name="android.permission.EXPAND_STATUS_BAR"/>
+    <uses-permission android:name="android.permission.BIND_ACCESSIBILITY_SERVICE" />
 
     <application
         android:allowBackup="true"
+        android:name=".App"
         android:label="Nexlink Status Bar"
         android:launchMode="singleTask" >
-        <receiver android:name=".BootReceiver" >
-            <intent-filter android:priority="999" >
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-            </intent-filter>
-        </receiver>
         <service
             android:name=".MainService"
             android:label="Nexlink Status Bar">
         </service>
         <service
-            android:name=".GenericService"
-            android:label="Test">
-        </service>
-        <service
-            android:name=".NLService"
+            android:enabled="false"
+            android:name=".NotifServNew"
             android:label="Nexlink Status Bar Notification Service"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE" >
             <intent-filter>
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter> 
         </service>
+        <service
+            android:enabled="false"
+            android:name=".NotifServOld"
+            android:label="Nexlink Status Bar Notification Service">
+        </service>
+        <service
+            android:enabled="false"
+            android:name=".NotifServOldAcc"
+            android:label="Nexlink Status Bar Notification Service"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <meta-data
+    android:name="android.accessibilityservice"
+    android:resource="@xml/accessibility_service_config" />
+            <intent-filter>
+                 <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+        </service>
         <activity
             android:label="Nexlink Status Bar"
-            android:name=".LaunchActivity"
+            android:name=".HomeActivity"
             android:theme="@android:style/Theme.NoDisplay" >
              <intent-filter >
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".HomeDummy"
+            android:theme="@android:style/Theme.NoDisplay"
+            android:enabled="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity> 
+        <activity
+            android:name=".SettingsActivity"
+            android:label="Status Bar Settings"
+            android:launchMode="singleInstance" >
+            <intent-filter >
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".SettingsActivity"
-            android:label="Status Bar Settings"
-            android:launchMode="singleInstance" />
         <activity
             android:name=".PackageSelectActivity"
             android:label="Select Packages" />

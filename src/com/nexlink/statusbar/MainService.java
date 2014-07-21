@@ -1,25 +1,18 @@
 package com.nexlink.statusbar;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.nexlink.utilites.SystemApp;
-
-import android.Manifest;
-import android.app.INotificationManager;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
@@ -32,15 +25,12 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
-import android.os.ServiceManager;
-import android.provider.Settings;
 import android.provider.Settings.SettingNotFoundException;
 import android.telephony.PhoneStateListener;
 import android.telephony.SignalStrength;
@@ -61,8 +51,6 @@ import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 
 public class MainService extends Service implements OnTouchListener {
-	
-	public static final boolean supportsNotifications = Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2;
 
 	private Handler handler;
 	private StatusBar statusBar;
@@ -123,28 +111,6 @@ public class MainService extends Service implements OnTouchListener {
 	public void onCreate() {
 		super.onCreate();
 		Prefs.init(this);
-		String packageName = getPackageName();
-		//Try to grant temp system permissions (easier for testing)
-		SystemApp.grantTempPermissions(packageName, new String[]{
-				Manifest.permission.WRITE_SECURE_SETTINGS,
-				Manifest.permission.ACCESS_NOTIFICATIONS //Need this for Android < 4.3
-		});
-		
-		//...Or install as system app
-		if(!((SystemApp.isSystemApp(this, packageName)) != 1 /*|| SystemApp.isUpdate(this)*/)){
-			System.out.println(SystemApp.installAsSystemApp(packageName, "NexlinkStatusBar.apk", true));
-			}
-		
-		ContentResolver contentResolver = getContentResolver();
-		String enabledNotificationListeners = Settings.Secure.getString(contentResolver, "enabled_notification_listeners");
-
-String servicePath = getPackageName()+"/"+getPackageName()+".NLService";
-			if ((enabledNotificationListeners == null || !enabledNotificationListeners.contains(servicePath)) && checkCallingOrSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS) == PackageManager.PERMISSION_GRANTED){
-				Settings.Secure.putString(getContentResolver(), "enabled_notification_listeners", enabledNotificationListeners == null || enabledNotificationListeners.isEmpty() ? servicePath : enabledNotificationListeners + ":" + servicePath);
-				stopSelf();
-				startService(new Intent(this, getClass()));
-				return;
-			    }
 	
 		handler = new Handler();
 		mWindowManager = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
@@ -419,8 +385,8 @@ String servicePath = getPackageName()+"/"+getPackageName()+".NLService";
         mLocationManager.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER, 0, 0, x);
         
         
-        if(supportsNotifications && Prefs.notificationsEnabled){
-    		mToMainService = new Messenger(new NLService.ClientHandler() {		
+        if(true/*Prefs.notificationsEnabled*/){
+    		mToMainService = new Messenger(new NotificationService.ClientHandler() {		
     			@Override
     			public void onNotificationRemoved(final NotificationItem ni) {
     				handler.post(new Runnable() {
@@ -428,7 +394,7 @@ String servicePath = getPackageName()+"/"+getPackageName()+".NLService";
     						for (int i = 0; i < activeNotifications.size(); i++) {
     							if (activeNotifications.get(i).isSameNotification(ni)) {
     								activeNotifications.remove(i);
-    								statusDrawer.removeNotification(ni);
+    								statusDrawer.removeNotificationListItem(ni);
     								break;
     							}
     						}
@@ -454,7 +420,7 @@ String servicePath = getPackageName()+"/"+getPackageName()+".NLService";
     								return;
     							}
     						}
-    						statusDrawer.addNotification(ni);
+    						statusDrawer.addNotificationListItem(ni);
     						//statusBar.setTickerNotification(ni);
     						activeNotifications.add(ni);
     					}
@@ -470,7 +436,7 @@ String servicePath = getPackageName()+"/"+getPackageName()+".NLService";
     							continue;
     						}
     						ni = existingNotifications[i];
-    						statusDrawer.addNotification(ni);
+    						statusDrawer.addNotificationListItem(ni);
     						activeNotifications.add(ni);
     					}
     					statusBar.setTickerNotification(ni);
@@ -478,14 +444,14 @@ String servicePath = getPackageName()+"/"+getPackageName()+".NLService";
     			}
     		});
     		
-    		
-    		bindService(new Intent(this, NLService.class).setAction(NLService.ACTION_CLIENT_BIND), mNLServiceConnection = new ServiceConnection(){
+    		NotificationService notificationService = App.getNotificationService();
+    		bindService(new Intent(this, notificationService.getClass()).setAction(NotificationService.ACTION_CLIENT_BIND), mNLServiceConnection = new ServiceConnection(){
     			@Override
     			public void onServiceConnected(ComponentName name, IBinder service) {
     				mToNLService = new Messenger(service);
     	            try {
-    	            	mToNLService.send(Message.obtain(null, NLService.MSG_GET_ACTIVE_NOTIFICATIONS, mToMainService));
-    	            	mToNLService.send(Message.obtain(null, NLService.MSG_SUBSCRIBE, mToMainService));
+    	            	mToNLService.send(Message.obtain(null, NotificationService.MSG_GET_ACTIVE_NOTIFICATIONS, mToMainService));
+    	            	mToNLService.send(Message.obtain(null, NotificationService.MSG_SUBSCRIBE, mToMainService));
     	            	} catch (RemoteException e) {}
     			}
 
@@ -493,9 +459,10 @@ String servicePath = getPackageName()+"/"+getPackageName()+".NLService";
     			public void onServiceDisconnected(ComponentName name) {
     				mToNLService = null;
     			}}, Context.BIND_AUTO_CREATE);
+ 
     		}
     		
-        else if (!supportsNotifications && checkCallingOrSelfPermission(Manifest.permission.ACCESS_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED){
+       /* else if (!App.supportsNLS && checkCallingOrSelfPermission(Manifest.permission.ACCESS_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED){
         	/* It seems the hidden implementation of NotificationListener was unfinished in Android 4.0.1, but can still clear
     		 * notifications, so they don't clog up the system.
     		 * http://grepcode.com/file/repository.grepcode.com/java/ext/com.google.android/android/4.0.1_r1/android/app/INotificationManager.java?av=f
@@ -503,23 +470,14 @@ String servicePath = getPackageName()+"/"+getPackageName()+".NLService";
     		 * 4.1.1 can also block notifications
     		 * http://grepcode.com/file/repository.grepcode.com/java/ext/com.google.android/android/4.1.1_r1/android/app/INotificationManager.java?av=f
     		 */
-        	INotificationManager notificationManager = INotificationManager.Stub.asInterface(ServiceManager.getService(Context.NOTIFICATION_SERVICE));
-        	try {
-        		Class NM = Class.forName("android.app.INotificationManager");
-        		Method cancelAllNotifications = NM.getMethod("cancelAllNotifications", String.class);
-        		cancelAllNotifications.invoke(notificationManager, getPackageName());
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-        }
+        //}
         
     		
     		//Rotate the active activeNotifications every 5 seconds
     		handler.postDelayed(new Runnable() {
     			public void run() {
     				if (activeNotifications.size() == 0) {
-    					statusBar.setTickerNotification(null);
+    					statusBar.setTickerNotification(new NotificationItem());
     				}
     				else if (activeNotifications.size() > tickerIndex) {
     					statusBar.setTickerNotification((NotificationItem) activeNotifications.get(tickerIndex));
@@ -542,6 +500,7 @@ String servicePath = getPackageName()+"/"+getPackageName()+".NLService";
 	public void onConfigurationChanged(Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
 		//Send out a test notification
+
 		NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 		Notification.Builder ncomp = new Notification.Builder(this);
 		ncomp.setContentTitle("My Notification");
@@ -549,17 +508,13 @@ String servicePath = getPackageName()+"/"+getPackageName()+".NLService";
 		ncomp.setTicker("Really really really really really really long notification");
 		ncomp.setSmallIcon(R.drawable.ic_qs_signal_full_4g);
 		ncomp.setAutoCancel(true);
-		nm.notify((int) System.currentTimeMillis(), ncomp.build());
+		nm.notify((int) System.currentTimeMillis(), ncomp.getNotification());
 		//Stop the drawer from glitching when orientation is changed
 		statusDrawer.resetDrawer();
 	}
 
 	public StatusBar getStatusBar() {
 		return statusBar;
-	}
-
-	public void cancelTicker() {
-		//statusBar.setTickerNotification(null);	
 	}
 
 	public void showBrightnessSlider() {
@@ -620,16 +575,29 @@ String servicePath = getPackageName()+"/"+getPackageName()+".NLService";
 	public void cancelNotification(NotificationItem ni) {
 		if(mToNLService != null){
 			try {
-				mToNLService.send(Message.obtain(null, NLService.MSG_CANCEL_NOTIFICATION, ni));
+				mToNLService.send(Message.obtain(null, NotifServNew.MSG_CANCEL_NOTIFICATION, ni));
 			} catch (RemoteException e) {e.printStackTrace();}
 		}
+		
+		if(!App.supportsNLS){
+			for (int i = 0; i < activeNotifications.size(); i++) {
+				if (activeNotifications.get(i).isSameNotification(ni)) {
+					activeNotifications.remove(i);
+					statusDrawer.removeNotificationListItem(ni);
+					break;
+				}
+		}}
 	}
 
 	public void cancelAllNotifications() {
 		if(mToNLService != null){
 			try {
-				mToNLService.send(Message.obtain(null, NLService.MSG_CANCEL_ALL_NOTIFICATIONS));
+				mToNLService.send(Message.obtain(null, NotifServNew.MSG_CANCEL_ALL_NOTIFICATIONS));
 			} catch (RemoteException e) {e.printStackTrace();}
+		}
+		
+		if(!App.supportsNLS){
+			activeNotifications.clear();
 		}
 	}
 }

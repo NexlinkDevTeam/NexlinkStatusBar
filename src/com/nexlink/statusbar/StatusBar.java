@@ -23,7 +23,6 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 public class StatusBar{
     private MainService mMainService;
@@ -35,19 +34,21 @@ public class StatusBar{
     private int signalStrengthID = R.drawable.stat_sys_signal_null;
     private int wifiIconID = R.drawable.stat_sys_wifi_signal_null;
 	private ImageView gpsIcon;
+	
+	private NotificationItem tickerNotification = new NotificationItem();
    
     public LinearLayout getLayout(){
     	return mStatusBarLayout;
     }
     
     public void setTickerNotification(NotificationItem ni){
-    	if(ni == null){
-    		ni = new NotificationItem();
-    		ni.tickerText = "";
-    		ni.iconDrawable = new ColorDrawable(Color.BLACK);
-    	}
+    	tickerNotification = ni;
     	notificationText.setText(ni.tickerText);
     	notificationIcon.setImageDrawable(ni.iconDrawable);
+    }
+    
+    public NotificationItem getTickerNotification(){
+    	return tickerNotification;
     }
     
     public StatusBar(MainService ms){

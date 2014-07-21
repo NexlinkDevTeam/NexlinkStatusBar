@@ -58,7 +58,7 @@ public class StatusDrawer {
 		return (event.getAction() == MotionEvent.ACTION_DOWN) ? slidingDrawer.onInterceptTouchEvent(event) : slidingDrawer.onTouchEvent(event);
 	}
 
-	public void addNotification(NotificationItem ni) {
+	public void addNotificationListItem(NotificationItem ni) {
 		notificationsListAdapter.add(ni);
 		notificationsListAdapter.doSort();
 		notificationsListAdapter.notifyDataSetChanged();
@@ -66,17 +66,17 @@ public class StatusDrawer {
 		notificationsListView.setSelection(notificationsListView.getCount() - 1);
 	}
 
-	public void removeNotification(NotificationItem removed) {
+	public void removeNotificationListItem(NotificationItem removed) {
 		for (int i = 0; i < notificationsListAdapter.getCount(); i++) {
 			NotificationItem ni = notificationsListAdapter.getItem(i);
 			if (removed.isSameNotification(ni)) {
 				notificationsListAdapter.remove(ni);
+				notificationsListAdapter.notifyDataSetChanged();
+				notificationsListView.setAdapter(notificationsListAdapter);
+				notificationsListView.setSelection(notificationsListView.getCount() - 1);
 				break;
 			}
 		}
-		notificationsListAdapter.notifyDataSetChanged();
-		notificationsListView.setAdapter(notificationsListAdapter);
-		notificationsListView.setSelection(notificationsListView.getCount() - 1);
 	}
 
 	public void resetDrawer() {
@@ -218,7 +218,7 @@ public class StatusDrawer {
 		});
 		
 		
-		bluetoothSDOI = new StatusDrawerOptionItem(mMainService.getResources().getDrawable(R.drawable.ic_qs_bluetooth_off), null, "Bluetooth Off", new OnClickListener(){
+		bluetoothSDOI = new StatusDrawerOptionItem(mMainService.getResources().getDrawable(R.drawable.ic_qs_bluetooth_off), null, "Bluetooth", new OnClickListener(){
 			@Override
 			public void onClick(View v) {
 				BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -297,10 +297,15 @@ public class StatusDrawer {
 			public void onClick(View arg0) {
 				if(mMainService.checkCallingOrSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS) == PackageManager.PERMISSION_GRANTED){
 				ContentResolver cr = mMainService.getContentResolver();
-				boolean isEnabled = Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR1 ?
-						Settings.System.getInt(cr, Settings.System.AIRPLANE_MODE_ON, 0) != 0:
-						Settings.Global.getInt(cr, Settings.Global.AIRPLANE_MODE_ON, 0) != 0;
-						Settings.Global.putInt(cr, Settings.Global.AIRPLANE_MODE_ON, isEnabled ? 0 : 1);		
+				boolean isEnabled = false;
+				if(Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR1){
+					isEnabled = Settings.Global.getInt(cr, Settings.Global.AIRPLANE_MODE_ON, 0) != 0;
+					Settings.Global.putInt(cr, Settings.Global.AIRPLANE_MODE_ON, isEnabled ? 0 : 1);	
+				}
+				else{
+					isEnabled = Settings.System.getInt(cr, Settings.System.AIRPLANE_MODE_ON, 0) != 0;
+					Settings.System.putInt(cr, Settings.Global.AIRPLANE_MODE_ON, isEnabled ? 0 : 1);
+				}
 		           try {
 		        	   /*
 		        	    * Not sure if this is possible for an unsigned app. Setting the app as persistent supposedly allows you

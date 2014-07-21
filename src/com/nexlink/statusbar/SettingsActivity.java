@@ -12,12 +12,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.os.Process;
-import android.os.UserHandle;
-import android.os.UserManager;
-import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceFragment;
@@ -33,12 +28,6 @@ public class SettingsActivity extends Activity {
 			super.onCreate(savedInstanceState);
 			getPreferenceManager().setSharedPreferencesName(Prefs.sharedprefsName);
 			addPreferencesFromResource(R.xml.preferences);
-			if (android.os.Build.VERSION.SDK_INT < 18) {
-				final CheckBoxPreference notificationsCheckbox = (CheckBoxPreference) findPreference("notificationsEnabled");
-				notificationsCheckbox.setChecked(false);
-				notificationsCheckbox.setEnabled(false);
-				notificationsCheckbox.setSummary("Only available on Android 4.3+");
-			}
 			findPreference("selectPackages").setOnPreferenceClickListener(new OnPreferenceClickListener() {
 				@Override
 				public boolean onPreferenceClick(Preference arg0) {
