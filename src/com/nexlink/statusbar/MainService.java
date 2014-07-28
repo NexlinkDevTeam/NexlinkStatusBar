@@ -25,12 +25,14 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+import android.provider.Settings;
 import android.provider.Settings.SettingNotFoundException;
 import android.telephony.PhoneStateListener;
 import android.telephony.SignalStrength;
@@ -45,12 +47,16 @@ import android.view.View.OnTouchListener;
 import android.view.WindowManager;
 import android.view.WindowManager.LayoutParams;
 import android.widget.Button;
+import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
+import android.widget.ToggleButton;
 
 public class MainService extends Service implements OnTouchListener {
+	private Prefs mPrefs;
 
 	private Handler handler;
 	private StatusBar statusBar;
@@ -80,6 +86,7 @@ public class MainService extends Service implements OnTouchListener {
 	private BroadcastReceiver mBatteryReceiver;
 	private BroadcastReceiver mRingerReceiver;
 	private BroadcastReceiver mTimeReceiver;
+	private BroadcastReceiver mAirplaneReceiver;
 	
 
 	private int getStatusBarHeight() {
@@ -102,6 +109,7 @@ public class MainService extends Service implements OnTouchListener {
 		if(mBatteryReceiver != null) unregisterReceiver(mBatteryReceiver);
 		if(mRingerReceiver != null) unregisterReceiver(mRingerReceiver);
 		if(mTimeReceiver != null) unregisterReceiver(mTimeReceiver);
+		if(mAirplaneReceiver != null) unregisterReceiver(mAirplaneReceiver);
 		if(mOverlayLayout != null) mWindowManager.removeView(mOverlayLayout);
 		if(mStatusBarLayout != null) mWindowManager.removeView(mStatusBarLayout);
 		if(mStatusDrawerLayout != null) mWindowManager.removeView(mStatusDrawerLayout);
@@ -110,7 +118,7 @@ public class MainService extends Service implements OnTouchListener {
 	@Override
 	public void onCreate() {
 		super.onCreate();
-		Prefs.init(this);
+		mPrefs = App.reloadPrefs(this);
 	
 		handler = new Handler();
 		mWindowManager = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
@@ -124,9 +132,9 @@ public class MainService extends Service implements OnTouchListener {
 		mConnectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 		mLocationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
 		
-		if(!Prefs.generalEnabled){
-			if(Prefs.generalOpenable){
-			stopSelf();
+		if(!mPrefs.generalEnabled){
+			if(mPrefs.generalOpenable){
+			    stopSelf();
 			}
 			else{
 				mOverlayLayout = new LinearLayout(this);
@@ -357,33 +365,50 @@ public class MainService extends Service implements OnTouchListener {
 			@Override
 			public void onLocationChanged(Location arg0) {
 			    statusDrawer.setGps(getState());
-			    statusBar.setGps(getState());
+			    statusBar.setLocation(getState());
 			}
 
 			@Override
 			public void onProviderDisabled(String arg0) {
 				statusDrawer.setGps(getState());
-				statusBar.setGps(getState());
+				statusBar.setLocation(getState());
 			}
 
 			@Override
 			public void onProviderEnabled(String arg0) {
-				statusBar.setGps(getState());
+				statusBar.setLocation(getState());
 				statusDrawer.setGps(getState());
 			}
 
 			@Override
 			public void onStatusChanged(String arg0, int arg1, Bundle arg2) {
-				statusBar.setGps(getState());
+				statusBar.setLocation(getState());
 				statusDrawer.setGps(getState());
 			}};
-			if (mLocationManager.getAllProviders().contains(LocationManager.GPS_PROVIDER))
-        mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, x);
-			if (mLocationManager.getAllProviders().contains(LocationManager.NETWORK_PROVIDER))
-        mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, x);
-			if (mLocationManager.getAllProviders().contains(LocationManager.PASSIVE_PROVIDER))
-        mLocationManager.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER, 0, 0, x);
-        
+			if (mLocationManager.getAllProviders().contains(LocationManager.GPS_PROVIDER)){
+                mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, x);
+			}
+			if (mLocationManager.getAllProviders().contains(LocationManager.NETWORK_PROVIDER)){
+                mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, x);
+			}
+			if (mLocationManager.getAllProviders().contains(LocationManager.PASSIVE_PROVIDER)){
+                mLocationManager.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER, 0, 0, x);
+			}
+			
+			registerReceiver(mAirplaneReceiver = new BroadcastReceiver() {
+	            @Override
+	            public void onReceive(Context c, Intent i) {
+	            	statusDrawer.setAirplaneMode(i.getBooleanExtra("state", false));
+	            }
+	        }, new IntentFilter(Intent.ACTION_AIRPLANE_MODE_CHANGED));
+			boolean isEnabled = false;
+			if(Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR1){
+				isEnabled = Settings.System.getInt(getContentResolver(), Settings.System.AIRPLANE_MODE_ON, 0) != 0;
+			}
+			else{
+				isEnabled = Settings.Global.getInt(getContentResolver(), Settings.Global.AIRPLANE_MODE_ON, 0) != 0;
+			}
+			mAirplaneReceiver.onReceive(this, new Intent().putExtra("state", isEnabled));
         
         if(true/*Prefs.notificationsEnabled*/){
     		mToMainService = new Messenger(new NotificationService.ClientHandler() {		
@@ -404,12 +429,12 @@ public class MainService extends Service implements OnTouchListener {
     			
     			@Override
     			public void onNotificationPosted(final NotificationItem ni) {
-    				if(!Prefs.notificationsEnabled){
+    				if(!mPrefs.notificationsEnabled){
     					return;
     				}
     				handler.post(new Runnable() {
     					public void run() {
-    						if(Prefs.notificationsWhitelisting && !Prefs.notificationsSources.contains(ni.packageName)){
+    						if(mPrefs.notificationsWhitelisting && !mPrefs.notificationsSources.contains(ni.packageName)){
     							return;
     						}
     						for (int i = 0; i < activeNotifications.size(); i++) {
@@ -432,7 +457,7 @@ public class MainService extends Service implements OnTouchListener {
     				if (existingNotifications.length > 0) {
     					NotificationItem ni = null;
     					for (int i = 0; i < existingNotifications.length; i++) {
-    						if(Prefs.notificationsWhitelisting && !Prefs.notificationsSources.contains(existingNotifications[i].packageName)){
+    						if(mPrefs.notificationsWhitelisting && !mPrefs.notificationsSources.contains(existingNotifications[i].packageName)){
     							continue;
     						}
     						ni = existingNotifications[i];
@@ -459,8 +484,12 @@ public class MainService extends Service implements OnTouchListener {
     			public void onServiceDisconnected(ComponentName name) {
     				mToNLService = null;
     			}}, Context.BIND_AUTO_CREATE);
- 
+    		
+    		
+    		if(!App.supportsNLS){
+    			cancelAllNotifications();
     		}
+    }
     		
        /* else if (!App.supportsNLS && checkCallingOrSelfPermission(Manifest.permission.ACCESS_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED){
         	/* It seems the hidden implementation of NotificationListener was unfinished in Android 4.0.1, but can still clear
@@ -493,7 +522,7 @@ public class MainService extends Service implements OnTouchListener {
 
 	@Override
 	public boolean onTouch(View v, MotionEvent event) {
-		return !Prefs.generalOpenable || statusDrawer.passTouchEvent(event);
+		return !mPrefs.generalOpenable || statusDrawer.passTouchEvent(event);
 	}
 
 	@Override
@@ -529,36 +558,53 @@ public class MainService extends Service implements OnTouchListener {
         layoutParams.windowAnimations = android.R.style.Animation_Dialog;
 
        final View view = View.inflate(this, R.layout.activity_brightness_popup, null);
-       final SeekBar sb = (SeekBar) view.findViewById(R.id.brightness_slider);
-       int temp = 127;
+       final SeekBar slider = (SeekBar) view.findViewById(R.id.brightness_slider);
+       final ToggleButton autoButton = (ToggleButton) view.findViewById(R.id.brightness_slider_toggle);
+       final Button okButton = (Button) view.findViewById(R.id.brightness_slider_ok);
+       final Button cancelButton = (Button)view.findViewById(R.id.brightness_slider_cancel);
+       
+       int tmp1 = 127;
+       int tmp2 = 0;
        try {
-		temp = android.provider.Settings.System.getInt(getContentResolver(), android.provider.Settings.System.SCREEN_BRIGHTNESS);
+		tmp1 = Settings.System.getInt(getContentResolver(), Settings.System.SCREEN_BRIGHTNESS);
+		tmp2 = Settings.System.getInt(getContentResolver(), Settings.System.SCREEN_BRIGHTNESS_MODE);
 	} catch (SettingNotFoundException e) {}
-       final int initial = temp;
-       sb.setProgress(initial);
-       sb.setOnSeekBarChangeListener(new OnSeekBarChangeListener(){
+       final int brightness = tmp1;
+       final int auto = tmp2;
+       slider.setProgress(brightness);
+       slider.setOnSeekBarChangeListener(new OnSeekBarChangeListener(){
 		@Override
 		public void onProgressChanged(SeekBar seekBar, int progress,boolean fromUser) {}
 		@Override
 		public void onStartTrackingTouch(SeekBar arg0) {}
 		@Override
 		public void onStopTrackingTouch(SeekBar arg0) {
-			android.provider.Settings.System.putInt(getContentResolver(), android.provider.Settings.System.SCREEN_BRIGHTNESS, arg0.getProgress());
+			Settings.System.putInt(getContentResolver(), Settings.System.SCREEN_BRIGHTNESS, arg0.getProgress());
 		}
     	   
        });
-
-        ((Button) view.findViewById(R.id.brightness_slider_ok)).setOnClickListener(new OnClickListener(){
+       slider.setEnabled(auto != 1);
+       autoButton.setChecked(auto == 1);
+       autoButton.setOnCheckedChangeListener(new OnCheckedChangeListener(){
+		@Override
+		public void onCheckedChanged(CompoundButton arg0, boolean arg1) {
+			slider.setEnabled(!arg1);
+			Settings.System.putInt(getContentResolver(), Settings.System.SCREEN_BRIGHTNESS_MODE, arg1 ? 1 : 0);
+		}});
+        okButton.setOnClickListener(new OnClickListener(){
 			@Override
 			public void onClick(View v) {
 				mWindowManager.removeView(view);
 			}	        	
         });
-        ((Button)view.findViewById(R.id.brightness_slider_cancel)).setOnClickListener(new OnClickListener(){
+        cancelButton.setOnClickListener(new OnClickListener(){
 			@Override
 			public void onClick(View v) {
-				if(sb.getProgress() != initial){
-					android.provider.Settings.System.putInt(getContentResolver(), android.provider.Settings.System.SCREEN_BRIGHTNESS, initial);
+				if(slider.getProgress() != brightness){
+					Settings.System.putInt(getContentResolver(), Settings.System.SCREEN_BRIGHTNESS, brightness);
+				}
+				if(autoButton.isChecked() != (auto == 1)){
+					Settings.System.putInt(getContentResolver(), Settings.System.SCREEN_BRIGHTNESS_MODE, auto);
 				}
 				mWindowManager.removeView(view);
 			}	        	
@@ -578,15 +624,6 @@ public class MainService extends Service implements OnTouchListener {
 				mToNLService.send(Message.obtain(null, NotifServNew.MSG_CANCEL_NOTIFICATION, ni));
 			} catch (RemoteException e) {e.printStackTrace();}
 		}
-		
-		if(!App.supportsNLS){
-			for (int i = 0; i < activeNotifications.size(); i++) {
-				if (activeNotifications.get(i).isSameNotification(ni)) {
-					activeNotifications.remove(i);
-					statusDrawer.removeNotificationListItem(ni);
-					break;
-				}
-		}}
 	}
 
 	public void cancelAllNotifications() {

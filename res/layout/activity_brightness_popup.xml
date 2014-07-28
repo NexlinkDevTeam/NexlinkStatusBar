@@ -6,22 +6,31 @@
     android:background="#000000"
     tools:context="${packageName}.${activityClass}" >
     <SeekBar android:id="@+id/brightness_slider" android:max="255" android:layout_width="match_parent" android:layout_height="wrap_content"></SeekBar>
+    <ToggleButton
+        android:id="@+id/brightness_slider_toggle"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/brightness_slider"
+        android:layout_marginLeft="10dp"
+        android:textOn="Auto"
+        android:textOff="Manual" />
 
     <Button
         android:id="@+id/brightness_slider_ok"
         android:layout_width="100dp"
         android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_below="@+id/brightness_slider"
-        android:layout_marginLeft="39dp"
+        android:layout_alignBaseline="@+id/brightness_slider_toggle"
+        android:layout_alignBottom="@+id/brightness_slider_toggle"
+        android:layout_toRightOf="@+id/brightness_slider_toggle"
         android:text="OK" />
 
     <Button
         android:id="@+id/brightness_slider_cancel"
         android:layout_width="100dp"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/brightness_slider"
-        android:layout_marginLeft="44dp"
+        android:layout_alignBaseline="@+id/brightness_slider_ok"
+        android:layout_alignBottom="@+id/brightness_slider_ok"
         android:layout_toRightOf="@+id/brightness_slider_ok"
         android:text="Cancel" />
 

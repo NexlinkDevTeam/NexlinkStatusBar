@@ -27,7 +27,6 @@
                 android:dependency="notificationsEnabled"
                 android:title="Whitelist Notifications"
                 android:summary="Allow only selected apps to display notifications"/>
-  
         <Preference 
                 android:title="Choose Apps"
                 android:key="selectPackages"
@@ -63,6 +62,14 @@
                 android:defaultValue="true"
                 android:title="Bluetooth"/>
      <CheckBoxPreference
+         android:key="iconsLocation"
+                android:defaultValue="true"
+                android:title="Location"/>
+     <CheckBoxPreference
+         android:key="iconsVolume"
+                android:defaultValue="true"
+                android:title="Volume"/>
+     <CheckBoxPreference
          android:key="iconsNotification"
                 android:defaultValue="true"
                 android:title="Notification"/>
@@ -71,18 +78,39 @@
                 android:title="User Settings"
                 android:dependency="generalEnabled"
                 android:summary="Choose which Android settings can be accessed  from the status bar">
- <CheckBoxPreference
-                android:key="optionsDisplay"
+
+    <CheckBoxPreference
+       android:key="optionsBluetooth"
                 android:defaultValue="true"
-                android:title="Display"/>
+                android:title="Bluetooth"/>
   <CheckBoxPreference
       android:key="optionsWifi"
                 android:defaultValue="true"
                 android:title="Wifi"/>
    <CheckBoxPreference
-       android:key="optionsBluetooth"
+                android:key="optionsDisplay"
                 android:defaultValue="true"
-                android:title="Bluetooth"/>
+                android:title="Brightness and Display"/>
+   <CheckBoxPreference
+                android:key="optionsMobile"
+                android:defaultValue="true"
+                android:title="Mobile Network Settings"/>
+   <CheckBoxPreference
+                android:key="optionsBattery"
+                android:defaultValue="true"
+                android:title="Battery"/>
+   <CheckBoxPreference
+                android:key="optionsLocation"
+                android:defaultValue="true"
+                android:title="Location"/>
+      <CheckBoxPreference
+                android:key="optionsAirplane"
+                android:defaultValue="true"
+                android:title="Airplane Mode"/>
+         <CheckBoxPreference
+                android:key="optionsSettings"
+                android:defaultValue="true"
+                android:title="All Settings"/>
         </PreferenceScreen>
     </PreferenceCategory>
              <Preference android:title="Restart"

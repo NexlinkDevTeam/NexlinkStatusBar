@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:orientation="horizontal"
     android:layout_weight="1"
-    android:gravity="left"
+    android:gravity="right"
     android:background="#000000">
     <ImageView android:id="@+id/notification_icon"
         android:adjustViewBounds="true"

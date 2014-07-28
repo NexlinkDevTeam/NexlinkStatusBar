@@ -90,7 +90,7 @@ public class SettingsActivity extends Activity {
 			public void onReceive(Context context, Intent intent) {
 				ArrayList < String > packageNames = intent.getExtras().getStringArrayList("packageNames");
 				if (packageNames != null) {
-					Prefs.setNotificationSources(mContext, new HashSet < String > (packageNames));
+					App.getPrefs().setNotificationSources(new HashSet < String > (packageNames));
 					Toast.makeText(context, "Saved notification apps!", Toast.LENGTH_LONG).show();
 				}
 			}

@@ -43,7 +43,7 @@ public class PackageSelectActivity extends Activity {
 		PackageManager pm = getPackageManager();
 		List<PackageInfo> list = pm.getInstalledPackages(0);
 
-		HashSet<String> enabled = Prefs.getNotificationSources(this);
+		HashSet<String> enabled = App.getPrefs().getNotificationSources();
 
 		for(PackageInfo pi : list) {	
 		    ApplicationInfo ai = null;

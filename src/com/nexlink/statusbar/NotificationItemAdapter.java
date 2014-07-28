@@ -38,7 +38,7 @@ public class NotificationItemAdapter extends ArrayAdapter < NotificationItem > {
 		NotificationItem ni = getItem(position);
 
 		imageView.setImageDrawable(ni.iconDrawable);
-		titleTextView.setText(ni.title);
+		titleTextView.setText((ni.clearable ? "" : "\uD83D\uDCCC") + ni.title);
 		textView.setText(ni.fullText);
 		timeText.setText(new SimpleDateFormat("h:mm aa").format(ni.time));
 		iconContainer.setBackgroundColor(ni.priority > -2 ? Color.DKGRAY : Color.BLACK);

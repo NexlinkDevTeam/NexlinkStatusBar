@@ -22,7 +22,7 @@ public interface NotificationService {
     }
     public static abstract class ClientHandler extends Handler implements ClientHandlerInterface{
     	 @Override
-         public void handleMessage(Message msg) {
+         public final void handleMessage(Message msg) {
              switch (msg.what) {
              case MSG_NOTIFICATION_POSTED:
              	onNotificationPosted((NotificationItem) msg.obj);

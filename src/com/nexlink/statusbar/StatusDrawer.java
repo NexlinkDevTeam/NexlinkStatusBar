@@ -3,6 +3,7 @@ package com.nexlink.statusbar;
 import java.lang.reflect.Method;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.PendingIntent;
 import android.app.PendingIntent.CanceledException;
@@ -20,6 +21,7 @@ import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.ConnectivityManager;
 import android.net.wifi.WifiManager;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.provider.Settings;
 import android.telephony.TelephonyManager;
@@ -39,7 +41,6 @@ import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TabHost;
 import android.widget.TabHost.OnTabChangeListener;
-import android.widget.Toast;
 
 import com.nexlink.statusbar.SlidingDrawer.OnDrawerCloseListener;
 import com.nexlink.statusbar.SlidingDrawer.OnDrawerOpenListener;
@@ -90,6 +91,7 @@ public class StatusDrawer {
 	}
 
 	private MainService mMainService;
+	private Prefs mPrefs;
 	private RelativeLayout slidingDrawerLayout;
 	private SlidingDrawer slidingDrawer;
 	private TabHost tabHost;
@@ -102,12 +104,14 @@ public class StatusDrawer {
 	private StatusDrawerOptionItem displaySDOI;
 	private StatusDrawerOptionItem signalSDOI;
 	private StatusDrawerOptionItem batterySDOI;
-	private StatusDrawerOptionItem gpsSDOI;
+	private StatusDrawerOptionItem locationSDOI;
 	private StatusDrawerOptionItem settingsSDOI;
 	private StatusDrawerOptionItem airplaneSDOI;
 	
+	@SuppressLint("InflateParams")
 	public StatusDrawer(MainService ms) {
 		mMainService = ms;
+		mPrefs = App.getPrefs();
 		slidingDrawerLayout = (RelativeLayout)((LayoutInflater) mMainService.getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.status_drawer, null);
 		slidingDrawer = (SlidingDrawer) slidingDrawerLayout.findViewById(R.id.status_drawer);
 		notificationsListView = (ListView) slidingDrawerLayout.findViewById(R.id.notifications_list);
@@ -161,8 +165,8 @@ public class StatusDrawer {
 		notificationsListView.setOnItemClickListener(new OnItemClickListener() {
 			@Override
 			public void onItemClick(AdapterView <? > arg0, View arg1, int arg2, long arg3) {
-				NotificationItem n = (NotificationItem) arg0.getAdapter().getItem(arg2);
-				PendingIntent p = n.intent;
+				NotificationItem ni = (NotificationItem) arg0.getAdapter().getItem(arg2);
+				PendingIntent p = ni.pendingIntent;
 				if (p != null) {
 					try {
 						p.send();
@@ -178,6 +182,12 @@ public class StatusDrawer {
 				NotificationItem ni = (NotificationItem) arg0.getAdapter().getItem(arg2);
 				if (!ni.clearable) {
 					return true;
+				}
+				PendingIntent p = ni.deleteIntent;
+				if (p != null) {
+					try {
+						p.send();
+					} catch (CanceledException e) {e.printStackTrace();}
 				}
 				notificationsListAdapter.remove(ni);
 				notificationsListAdapter.notifyDataSetChanged();
@@ -280,43 +290,73 @@ public class StatusDrawer {
 				mMainService.startActivity(new Intent(Intent.ACTION_POWER_USAGE_SUMMARY).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 		    	slidingDrawer.close();
 			}
-		}, null);
+		}, new OnLongClickListener(){
+			@Override
+			public boolean onLongClick(View arg0) {
+				mMainService.startActivity(new Intent(Intent.ACTION_POWER_USAGE_SUMMARY).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+		    	slidingDrawer.close();
+				return true;
+			}
+		});
 		
-		gpsSDOI = new StatusDrawerOptionItem(mMainService.getResources().getDrawable(R.drawable.ic_qs_location_off), null, "GPS", new OnClickListener(){
+		locationSDOI = new StatusDrawerOptionItem(mMainService.getResources().getDrawable(R.drawable.ic_qs_location_off), null, "GPS", new OnClickListener(){
 			@Override
 			public void onClick(View arg0) {
 				mMainService.startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 		    	slidingDrawer.close();
 			}
-		}, null);
+		}, new OnLongClickListener(){
+			@Override
+			public boolean onLongClick(View arg0) {
+				mMainService.startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+		    	slidingDrawer.close();
+				return true;
+			}
+		});
 		
-		
-		airplaneSDOI = new StatusDrawerOptionItem(mMainService.getResources().getDrawable(R.drawable.ic_qs_airplane_on), null, "Airplane Mode", new OnClickListener(){
+		airplaneSDOI = new StatusDrawerOptionItem(mMainService.getResources().getDrawable(R.drawable.ic_qs_airplane_off), null, "Airplane Mode", new OnClickListener(){
 			@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
 			@Override
-			public void onClick(View arg0) {
+			public void onClick(final View arg0) {
 				if(mMainService.checkCallingOrSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS) == PackageManager.PERMISSION_GRANTED){
 				ContentResolver cr = mMainService.getContentResolver();
 				boolean isEnabled = false;
 				if(Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR1){
-					isEnabled = Settings.Global.getInt(cr, Settings.Global.AIRPLANE_MODE_ON, 0) != 0;
-					Settings.Global.putInt(cr, Settings.Global.AIRPLANE_MODE_ON, isEnabled ? 0 : 1);	
+					isEnabled = Settings.System.getInt(cr, Settings.System.AIRPLANE_MODE_ON, 0) != 0;
+					Settings.System.putInt(cr, Settings.System.AIRPLANE_MODE_ON, isEnabled ? 0 : 1);	
 				}
 				else{
-					isEnabled = Settings.System.getInt(cr, Settings.System.AIRPLANE_MODE_ON, 0) != 0;
-					Settings.System.putInt(cr, Settings.Global.AIRPLANE_MODE_ON, isEnabled ? 0 : 1);
+					isEnabled = Settings.Global.getInt(cr, Settings.Global.AIRPLANE_MODE_ON, 0) != 0;
+					System.out.println(isEnabled);
+					Settings.Global.putInt(cr, Settings.Global.AIRPLANE_MODE_ON, isEnabled ? 0 : 1);
 				}
-		           try {
-		        	   /*
-		        	    * Not sure if this is possible for an unsigned app. Setting the app as persistent supposedly allows you
-		        	    * to send system broadcasts, but I have not been able to get it to work
-		        	    * http://androidforums.com/application-development/397247-notifying-other-applications-newly-installed-application.html
-		        	    */
-		        	   //Intent intent = new Intent(Intent.ACTION_AIRPLANE_MODE_CHANGED);
-			           //intent.putExtra("state", !isEnabled);
-			           //mMainService.sendBroadcast(intent);
-		        	    Shell.sudo("am broadcast -a android.intent.action.AIRPLANE_MODE --ez state " + !isEnabled);
-				} catch (ShellException e) {}
+				
+				 /*
+	        	    * Not sure if this is possible for an unsigned app. Setting the app as persistent supposedly allows you
+	        	    * to send system broadcasts, but I have not been able to get it to work
+	        	    * http://androidforums.com/application-development/397247-notifying-other-applications-newly-installed-application.html
+	        	    */
+	        	   //Intent pendingIntent = new Intent(Intent.ACTION_AIRPLANE_MODE_CHANGED);
+		           //pendingIntent.putExtra("state", !isEnabled);
+		           //mMainService.sendBroadcast(pendingIntent);
+				
+				arg0.setClickable(false);
+				
+				new AsyncTask<Boolean,Void,Void>(){
+					@Override
+					protected Void doInBackground(Boolean... params) {
+						try {
+							Shell.sudo("am broadcast -a android.intent.action.AIRPLANE_MODE --ez state " + params[0]);
+						} catch (ShellException e) {e.printStackTrace();}
+						return null;
+					}
+					@Override
+					protected void onPostExecute(Void v){
+						arg0.setClickable(true);
+					}
+				}.execute(!isEnabled);
+					
+		           
 			}
 			}
 		}, new OnLongClickListener(){
@@ -334,19 +374,26 @@ public class StatusDrawer {
 				mMainService.startActivity(new Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 		    	slidingDrawer.close();
 			}
-		}, null);
+		}, new OnLongClickListener(){
+			@Override
+			public boolean onLongClick(View arg0) {
+				mMainService.startActivity(new Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+		    	slidingDrawer.close();
+				return true;
+			}
+		});
 		
 		GridView gridView = (GridView) slidingDrawerLayout.findViewById(R.id.options_grid);
 
 		SDOIAdapter = new StatusDrawerOptionAdapter(mMainService);
-		SDOIAdapter.add(bluetoothSDOI);
-		SDOIAdapter.add(wifiSDOI);
-		SDOIAdapter.add(displaySDOI);
-		SDOIAdapter.add(signalSDOI);
-		SDOIAdapter.add(batterySDOI);
-		SDOIAdapter.add(gpsSDOI);
-		SDOIAdapter.add(airplaneSDOI);
-		SDOIAdapter.add(settingsSDOI);
+		if(mPrefs.optionsBluetooth) SDOIAdapter.add(bluetoothSDOI);
+		if(mPrefs.optionsWifi) SDOIAdapter.add(wifiSDOI);
+		if(mPrefs.optionsDisplay) SDOIAdapter.add(displaySDOI);
+		if(mPrefs.optionsMobile) SDOIAdapter.add(signalSDOI);
+		if(mPrefs.optionsBattery) SDOIAdapter.add(batterySDOI);
+		if(mPrefs.optionsLocation) SDOIAdapter.add(locationSDOI);
+		if(mPrefs.optionsAirplane) SDOIAdapter.add(airplaneSDOI);
+		if(mPrefs.optionsSettings) SDOIAdapter.add(settingsSDOI);
 		gridView.setAdapter(SDOIAdapter);
 
 		SDOIAdapter.notifyDataSetChanged();
@@ -469,12 +516,14 @@ public class StatusDrawer {
 		case 3: iconID = R.drawable.ic_qs_location_on; label = "High Accuracy"; break;
 		}
 		
-		gpsSDOI.iconLayer1 = mMainService.getResources().getDrawable(iconID);
-		gpsSDOI.label = label;
+		locationSDOI.iconLayer1 = mMainService.getResources().getDrawable(iconID);
+		locationSDOI.label = label;
 		SDOIAdapter.notifyDataSetChanged();
 	}
 	
 	public void setAirplaneMode(boolean enabled){
-		
+		int iconID = enabled ? R.drawable.ic_qs_airplane_on : R.drawable.ic_qs_airplane_off;
+		airplaneSDOI.iconLayer1 = mMainService.getResources().getDrawable(iconID);
+		SDOIAdapter.notifyDataSetChanged();
 	}
 }

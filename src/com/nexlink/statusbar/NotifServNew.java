@@ -2,11 +2,7 @@ package com.nexlink.statusbar;
 
 import java.util.ArrayList;
 
-import android.app.Notification;
 import android.content.Intent;
-import android.content.pm.PackageManager.NameNotFoundException;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -17,6 +13,10 @@ import android.service.notification.StatusBarNotification;
 import android.util.Log;
 
 public class NotifServNew extends NotificationListenerService implements NotificationService{
+	private static NotifServNew notifServNew;
+	public static NotifServNew getInstance(){
+		return notifServNew;
+	}
     private ArrayList<Messenger> clients = new ArrayList<Messenger>();
 
     private class IncomingHandler extends Handler {
@@ -41,7 +41,7 @@ public class NotifServNew extends NotificationListenerService implements Notific
 							int length = active != null ? active.length : 0;
 							NotificationItem[] a = new NotificationItem[length];
 							for(int i = 0; i < length; i++){
-								a[i] = makeNotificationInfo(active[i]);
+								a[i] = new NotificationItem(notifServNew, active[i]);
 							}
 							Message m = new Message();
 							m.what = MSG_GOT_ACTIVE_NOTIFICATIONS;
@@ -57,37 +57,18 @@ public class NotifServNew extends NotificationListenerService implements Notific
         }
     }
     final Messenger mToNLService = new Messenger(new IncomingHandler());
-
-    private NotificationItem makeNotificationInfo(StatusBarNotification sbn) {
-		Notification n = sbn.getNotification();
-		NotificationItem ni = new NotificationItem();
-		ni.notificationID = sbn.getId();
-		ni.packageName = sbn.getPackageName();
-		ni.tag = sbn.getTag();
-		ni.clearable = sbn.isClearable();
-		ni.time = sbn.getPostTime();
-		ni.priority = n.priority;
-		ni.intent = n.contentIntent;
-		ni.title = (String) (ni.clearable ? "":"📌 ") + n .extras.getCharSequence("android.title"); //Notification.EXTRA_TITLE
-		ni.fullText = (String) n.extras.getCharSequence("android.text"); //Notification.EXTRA_TEXT
-		ni.tickerText = (n.tickerText != null ? (String) n.tickerText : "");
-		ni.iconDrawable = new ColorDrawable(Color.TRANSPARENT);
-		try {
-			ni.iconDrawable = createPackageContext(ni.packageName, 0).getResources().getDrawable(n.icon);
-		} catch (NameNotFoundException e) {e.printStackTrace();}
-		return ni;
-	} 
     
     @Override
     public IBinder onBind(Intent intent) {
+    	notifServNew = this;
     	//The Android system also needs to bind to this service and it will choke if we return the custom binder
     	return intent.getAction().equals(ACTION_CLIENT_BIND) ? mToNLService.getBinder() : super.onBind(intent);
     }
 	@Override
-	public void onNotificationPosted(StatusBarNotification arg0) {System.out.println("dfsfdvdf");
+	public void onNotificationPosted(StatusBarNotification arg0) {
 		for(Messenger client : clients){
 			try {
-				client.send(Message.obtain(null, MSG_NOTIFICATION_POSTED, makeNotificationInfo(arg0)));
+				client.send(Message.obtain(null, MSG_NOTIFICATION_POSTED, new NotificationItem(this, arg0)));
 			} catch (RemoteException e) {e.printStackTrace();}
 		}
 	}
@@ -95,7 +76,7 @@ public class NotifServNew extends NotificationListenerService implements Notific
 	public void onNotificationRemoved(StatusBarNotification arg0) {
 		for(Messenger client : clients){
 			try {
-				client.send(Message.obtain(null, MSG_NOTIFICATION_REMOVED, makeNotificationInfo(arg0)));
+				client.send(Message.obtain(null, MSG_NOTIFICATION_REMOVED, new NotificationItem(this, arg0)));
 			} catch (RemoteException e) {e.printStackTrace();}
 		}
 	}

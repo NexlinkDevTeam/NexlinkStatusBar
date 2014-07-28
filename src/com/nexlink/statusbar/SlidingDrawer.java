@@ -16,8 +16,6 @@
 
 package com.nexlink.statusbar;
 
-import java.util.ArrayList;
-
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
@@ -636,7 +634,7 @@ public class SlidingDrawer extends ViewGroup {
 
 		return true;
 	}
-
+/*
 	private String shortFor(MotionEvent event, String... keys) {
 		String eventDesc = event.toString();
 		String[] eventDescItems = eventDesc.substring(
@@ -663,7 +661,7 @@ public class SlidingDrawer extends ViewGroup {
 
 		return shortDesc.toString().trim();
 	}
-
+*/
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
 		if (mLocked) {

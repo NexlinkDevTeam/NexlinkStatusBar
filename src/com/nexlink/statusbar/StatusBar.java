@@ -26,6 +26,7 @@ import android.widget.TextView;
 
 public class StatusBar{
     private MainService mMainService;
+    private Prefs mPrefs;
     private LinearLayout mStatusBarLayout;
     private TextView timeText, notificationText;
     private ImageView batteryIcon, signalIcon, wifiIcon, bluetoothIcon, volumeIcon, notificationIcon;
@@ -33,7 +34,7 @@ public class StatusBar{
     private int signalTypeID = 0;
     private int signalStrengthID = R.drawable.stat_sys_signal_null;
     private int wifiIconID = R.drawable.stat_sys_wifi_signal_null;
-	private ImageView gpsIcon;
+	private ImageView locationIcon;
 	
 	private NotificationItem tickerNotification = new NotificationItem();
    
@@ -53,13 +54,14 @@ public class StatusBar{
     
     public StatusBar(MainService ms){
         mMainService = ms;
-        
+        mPrefs = App.getPrefs();
+        		
         mStatusBarLayout = (LinearLayout) ((LayoutInflater) mMainService.getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.status_bar, null);
         
         notificationIcon = (ImageView) mStatusBarLayout.findViewById(R.id.notification_icon);        
         notificationText = (TextView) mStatusBarLayout.findViewById(R.id.notification_text);
         volumeIcon = (ImageView) mStatusBarLayout.findViewById(R.id.volume_icon);
-        gpsIcon = (ImageView) mStatusBarLayout.findViewById(R.id.gps_icon);
+        locationIcon = (ImageView) mStatusBarLayout.findViewById(R.id.gps_icon);
         bluetoothIcon = (ImageView) mStatusBarLayout.findViewById(R.id.bluetooth_icon);
         wifiIcon = (ImageView) mStatusBarLayout.findViewById(R.id.wifi_icon);
         signalIcon = (ImageView) mStatusBarLayout.findViewById(R.id.signal_icon);
@@ -69,14 +71,16 @@ public class StatusBar{
         
         notificationText.setSelected(true);
 
-        if(!Prefs.iconsTime) timeText.setVisibility(View.GONE);
-        if(!Prefs.iconsBattery)batteryIcon.setVisibility(View.GONE);
-        if(!Prefs.iconsSignal) signalIcon.setVisibility(View.GONE);
-        if(!Prefs.iconsWifi) wifiIcon.setVisibility(View.GONE);
-        if(!Prefs.iconsBluetooth || BluetoothAdapter.getDefaultAdapter() == null || !BluetoothAdapter.getDefaultAdapter().isEnabled()){
+        if(!mPrefs.iconsTime) timeText.setVisibility(View.GONE);
+        if(!mPrefs.iconsBattery)batteryIcon.setVisibility(View.GONE);
+        if(!mPrefs.iconsSignal) signalIcon.setVisibility(View.GONE);
+        if(!mPrefs.iconsWifi) wifiIcon.setVisibility(View.GONE);
+        if(!mPrefs.iconsVolume) volumeIcon.setVisibility(View.GONE);
+        if(!mPrefs.iconsLocation) locationIcon.setVisibility(View.GONE);
+        if(!mPrefs.iconsBluetooth || BluetoothAdapter.getDefaultAdapter() == null || !BluetoothAdapter.getDefaultAdapter().isEnabled()){
         	bluetoothIcon.setVisibility(View.GONE);
         }
-        if(!Prefs.iconsNotification){
+        if(!mPrefs.iconsNotification){
         	notificationIcon.setVisibility(View.GONE);
         	notificationText.setVisibility(View.GONE);
         }
@@ -151,7 +155,7 @@ public class StatusBar{
             	else if(mode == AudioManager.RINGER_MODE_VIBRATE){
             		id = R.drawable.stat_sys_ringer_vibrate;
             	}
-            	if(id != 0){
+            	if(mPrefs.iconsVolume && id != 0){
             		volumeIcon.setImageDrawable(mMainService.getResources().getDrawable(id));
             		volumeIcon.setVisibility(View.VISIBLE);
             	}          	
@@ -163,7 +167,7 @@ public class StatusBar{
     public void setBluetooth(Intent intent){
     	BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     	if(intent.getAction().compareTo(BluetoothAdapter.ACTION_STATE_CHANGED) == 0){
-		    bluetoothIcon.setVisibility(bluetoothAdapter != null && bluetoothAdapter.isEnabled() ? View.VISIBLE : View.GONE);
+		    bluetoothIcon.setVisibility(mPrefs.iconsBluetooth && bluetoothAdapter != null && bluetoothAdapter.isEnabled() ? View.VISIBLE : View.GONE);
 		}
 		else if(intent.getAction().compareTo(BluetoothAdapter.ACTION_CONNECTION_STATE_CHANGED) == 0){
 			bluetoothIcon.setImageDrawable((intent.getIntExtra(BluetoothAdapter.EXTRA_CONNECTION_STATE, BluetoothAdapter.STATE_DISCONNECTED) == BluetoothAdapter.STATE_DISCONNECTED) ? mMainService.getResources().getDrawable(R.drawable.stat_sys_data_bluetooth): mMainService.getResources().getDrawable(R.drawable.stat_sys_data_bluetooth_connected));
@@ -185,12 +189,14 @@ public class StatusBar{
         }
     }
     
-    public void setGps(int state){
+    public void setLocation(int state){
+    	if(mPrefs.iconsLocation){
 		switch(state){
 		case 0:
-		case 1: gpsIcon.setVisibility(View.GONE); break;
+		case 1: locationIcon.setVisibility(View.GONE); break;
 		case 2:
-		case 3: gpsIcon.setVisibility(View.VISIBLE); break;
+		case 3: locationIcon.setVisibility(View.VISIBLE); break;
 		}
+    	}
     }
 }
