@@ -1,11 +1,19 @@
 package com.nexlink.statusbar;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.android.internal.statusbar.IStatusBar;
+import com.android.internal.statusbar.IStatusBarService;
+import com.android.internal.statusbar.StatusBarIcon;
+import com.nexlink.utilites.InstallUtils;
+import com.nexlink.utilites.SystemUtils;
 
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
+import android.app.StatusBarManager;
 import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -32,14 +40,18 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+import android.os.ServiceManager;
+import android.os.ServiceManagerNative;
 import android.provider.Settings;
 import android.provider.Settings.SettingNotFoundException;
+import android.service.notification.StatusBarNotification;
 import android.telephony.PhoneStateListener;
 import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
 import android.util.AttributeSet;
 import android.view.Display;
 import android.view.Gravity;
+import android.view.IWindowManager;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -119,6 +131,28 @@ public class MainService extends Service implements OnTouchListener {
 	public void onCreate() {
 		super.onCreate();
 		mPrefs = App.reloadPrefs(this);
+		
+		/*
+		if(SystemUtils.isSystemApp(this, getPackageName())==0){
+			InstallUtils installer = new InstallUtils(this);
+			try {
+				installer.installRoot(new File(getPackageResourcePath()), true);
+				installer.uninstallRoot(getPackageName());
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			SystemUtils.restartVM();
+			return;
+		}
+		
+		
+		IStatusBarService isb = IStatusBarService.Stub.asInterface(ServiceManager.getService(Context.STATUS_BAR_SERVICE));
+		try {
+			isb.setSystemUiVisibility(0, 1);
+		} catch (RemoteException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}*/
 	
 		handler = new Handler();
 		mWindowManager = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
@@ -136,6 +170,7 @@ public class MainService extends Service implements OnTouchListener {
 			if(mPrefs.generalOpenable){
 			    stopSelf();
 			}
+			
 			else{
 				mOverlayLayout = new LinearLayout(this);
 				mOverlayLayout.setAlpha(0);
@@ -410,7 +445,7 @@ public class MainService extends Service implements OnTouchListener {
 			}
 			mAirplaneReceiver.onReceive(this, new Intent().putExtra("state", isEnabled));
         
-        if(true/*Prefs.notificationsEnabled*/){
+        if(mPrefs.notificationsEnabled){
     		mToMainService = new Messenger(new NotificationService.ClientHandler() {		
     			@Override
     			public void onNotificationRemoved(final NotificationItem ni) {
@@ -501,7 +536,6 @@ public class MainService extends Service implements OnTouchListener {
     		 */
         //}
         
-    		
     		//Rotate the active activeNotifications every 5 seconds
     		handler.postDelayed(new Runnable() {
     			public void run() {

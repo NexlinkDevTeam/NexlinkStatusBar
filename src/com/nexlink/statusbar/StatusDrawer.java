@@ -46,8 +46,6 @@ import com.nexlink.statusbar.SlidingDrawer.OnDrawerCloseListener;
 import com.nexlink.statusbar.SlidingDrawer.OnDrawerOpenListener;
 import com.nexlink.statusbar.SlidingDrawer.OnDrawerScrollListener;
 import com.nexlink.utilites.Shell;
-import com.nexlink.utilites.Shell.ShellException;
-
 
 public class StatusDrawer {
 
@@ -347,7 +345,7 @@ public class StatusDrawer {
 					protected Void doInBackground(Boolean... params) {
 						try {
 							Shell.sudo("am broadcast -a android.intent.action.AIRPLANE_MODE --ez state " + params[0]);
-						} catch (ShellException e) {e.printStackTrace();}
+						} catch (Exception e) {e.printStackTrace();}
 						return null;
 					}
 					@Override

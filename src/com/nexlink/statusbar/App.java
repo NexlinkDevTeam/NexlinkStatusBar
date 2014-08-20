@@ -14,8 +14,6 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.provider.Settings;
 
-import com.nexlink.utilites.SystemApp;
-
 public class App extends Application{
 	public static final boolean supportsNLS = Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2;
 	private static NotificationService notificationService;
@@ -70,25 +68,19 @@ public class App extends Application{
 		
 		//Try to grant temp system permissions (easier for testing)
     	String packageName = getPackageName();
-		SystemApp.grantTempPermissions(packageName, new String[]{
-				Manifest.permission.WRITE_SECURE_SETTINGS,
-				Manifest.permission.ACCESS_NOTIFICATIONS //Need this for Android < 4.3
-		});	
-		//...Or install as system app
-		if(!((SystemApp.isSystemApp(this, packageName)) != 1 /*|| SystemApp.isUpdate(this, packageName)*/)){
-			//System.out.println(SystemApp.installAsSystemApp(packageName, "NexlinkStatusBar.apk", true));
-			}
 		
 		//Once we have permission, automatically add an entry in settings to allow receiving notifications
-		ContentResolver contentResolver = getContentResolver();
-		notificationService = supportsNLS ? new NotifServNew() : new NotifServOld();
-		String enabledSetting = supportsNLS ? "enabled_notification_listeners" : Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES;
-		String enabledClasses = Settings.Secure.getString(contentResolver, enabledSetting);
-        String servicePath = packageName+"/"+packageName+(supportsNLS?".NotifServNew":".NotifServOldAcc");
-		if ((enabledClasses == null || !enabledClasses.contains(servicePath)) && checkCallingOrSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS) == PackageManager.PERMISSION_GRANTED){
-			Settings.Secure.putString(getContentResolver(), enabledSetting, enabledClasses == null || enabledClasses.isEmpty() ? servicePath : enabledClasses + ":" + servicePath);
+    	try{
+		    ContentResolver contentResolver = getContentResolver();
+		    notificationService = supportsNLS ? new NotifServNew() : new NotifServOld();
+		    String enabledSetting = supportsNLS ? "enabled_notification_listeners" : Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES;
+		    String enabledClasses = Settings.Secure.getString(contentResolver, enabledSetting);
+            String servicePath = packageName+"/"+packageName+(supportsNLS?".NotifServNew":".NotifServOldAcc");
+		    if ((enabledClasses == null || !enabledClasses.contains(servicePath)) && checkCallingOrSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS) == PackageManager.PERMISSION_GRANTED){
+			    Settings.Secure.putString(getContentResolver(), enabledSetting, enabledClasses == null || enabledClasses.isEmpty() ? servicePath : enabledClasses + ":" + servicePath);
 	    }
-		System.out.println(Settings.Secure.getString(contentResolver, enabledSetting));
+		}
+		catch(Exception e){}
 		
 		//Start the service
 		startService(new Intent(this, MainService.class));

@@ -23,6 +23,7 @@
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATIONS"/> <!-- System permission needed for API < 18 -->
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"/>
     <uses-permission android:name="android.permission.EXPAND_STATUS_BAR"/>
+    <uses-permission android:name="android.permission.STATUS_BAR_SERVICE"/>
     <uses-permission android:name="android.permission.BIND_ACCESSIBILITY_SERVICE" />
 
     <application
