@@ -2,7 +2,6 @@ package com.nexlink.statusbar;
 
 import java.lang.reflect.Method;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.PendingIntent;
@@ -11,7 +10,6 @@ import android.bluetooth.BluetoothAdapter;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -46,6 +44,7 @@ import com.nexlink.statusbar.SlidingDrawer.OnDrawerCloseListener;
 import com.nexlink.statusbar.SlidingDrawer.OnDrawerOpenListener;
 import com.nexlink.statusbar.SlidingDrawer.OnDrawerScrollListener;
 import com.nexlink.utilites.Shell;
+import com.nexlink.utilites.Shell.ShellException;
 
 public class StatusDrawer {
 
@@ -316,17 +315,16 @@ public class StatusDrawer {
 			@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
 			@Override
 			public void onClick(final View arg0) {
-				if(mMainService.checkCallingOrSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS) == PackageManager.PERMISSION_GRANTED){
 				ContentResolver cr = mMainService.getContentResolver();
 				boolean isEnabled = false;
-				if(Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR1){
+				boolean old = Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR1;
+				if(old){
 					isEnabled = Settings.System.getInt(cr, Settings.System.AIRPLANE_MODE_ON, 0) != 0;
-					Settings.System.putInt(cr, Settings.System.AIRPLANE_MODE_ON, isEnabled ? 0 : 1);	
+					//Settings.System.putInt(cr, Settings.System.AIRPLANE_MODE_ON, isEnabled ? 0 : 1);	
 				}
 				else{
 					isEnabled = Settings.Global.getInt(cr, Settings.Global.AIRPLANE_MODE_ON, 0) != 0;
-					System.out.println(isEnabled);
-					Settings.Global.putInt(cr, Settings.Global.AIRPLANE_MODE_ON, isEnabled ? 0 : 1);
+					//Settings.Global.putInt(cr, Settings.Global.AIRPLANE_MODE_ON, isEnabled ? 0 : 1);
 				}
 				
 				 /*
@@ -338,24 +336,26 @@ public class StatusDrawer {
 		           //pendingIntent.putExtra("state", !isEnabled);
 		           //mMainService.sendBroadcast(pendingIntent);
 				
-				arg0.setClickable(false);
-				
 				new AsyncTask<Boolean,Void,Void>(){
+					@Override
+					protected void onPreExecute(){
+						arg0.setClickable(false);
+					}
 					@Override
 					protected Void doInBackground(Boolean... params) {
 						try {
-							Shell.sudo("am broadcast -a android.intent.action.AIRPLANE_MODE --ez state " + params[0]);
-						} catch (Exception e) {e.printStackTrace();}
+							Shell.sudo(
+									"settings put " + (params[1] ? "system" : "global") + " airplane_mode_on " + (params[0] ? "1" : "0") +
+									";am broadcast -a android.intent.action.AIRPLANE_MODE --ez state " + params[0]
+									);
+						} catch (ShellException e) {e.printStackTrace();}
 						return null;
 					}
 					@Override
 					protected void onPostExecute(Void v){
 						arg0.setClickable(true);
 					}
-				}.execute(!isEnabled);
-					
-		           
-			}
+				}.execute(!isEnabled, old);
 			}
 		}, new OnLongClickListener(){
 			@Override

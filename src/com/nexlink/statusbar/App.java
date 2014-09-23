@@ -35,7 +35,11 @@ public class App extends Application{
 		//Load saved prefs
 		mPrefs = reloadPrefs(this);
 		
-	    //Check if this is the default home app and prompt to set it if it's not
+	    /*
+	     * Check if this is the default home app and prompt to set it if it's not
+	     * It needs to be set as the home app in order to start immediately on boot
+	     * Then we can programmatically launch the "real" home app (Trebuchet or whatever)
+	     */
 	    boolean isDefault = false;
 		final IntentFilter filter = new IntentFilter(Intent.ACTION_MAIN);
 	    filter.addCategory(Intent.CATEGORY_HOME);
@@ -51,6 +55,8 @@ public class App extends Application{
 	        	break;
 	        }
 	    }
+	    
+	    //Toggle the home component to get android to detect it as a new home app and prompt to set it
 	    if(!isDefault){
 	        ComponentName componentName = new ComponentName(this, HomeDummy.class);
 	        packageManager.setComponentEnabledSetting(componentName, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
@@ -65,8 +71,6 @@ public class App extends Application{
     	    packageManager.setComponentEnabledSetting(new ComponentName(this, NotifServNew.class), supportsNLS ? 1 : 2, PackageManager.DONT_KILL_APP);
     	}
 		
-		
-		//Try to grant temp system permissions (easier for testing)
     	String packageName = getPackageName();
 		
 		//Once we have permission, automatically add an entry in settings to allow receiving notifications

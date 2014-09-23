@@ -1,19 +1,12 @@
 package com.nexlink.statusbar;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.android.internal.statusbar.IStatusBar;
-import com.android.internal.statusbar.IStatusBarService;
-import com.android.internal.statusbar.StatusBarIcon;
-import com.nexlink.utilites.InstallUtils;
-import com.nexlink.utilites.SystemUtils;
-
+import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
-import android.app.StatusBarManager;
 import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -40,18 +33,14 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
-import android.os.ServiceManager;
-import android.os.ServiceManagerNative;
 import android.provider.Settings;
 import android.provider.Settings.SettingNotFoundException;
-import android.service.notification.StatusBarNotification;
 import android.telephony.PhoneStateListener;
 import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
 import android.util.AttributeSet;
 import android.view.Display;
 import android.view.Gravity;
-import android.view.IWindowManager;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -127,6 +116,7 @@ public class MainService extends Service implements OnTouchListener {
 		if(mStatusDrawerLayout != null) mWindowManager.removeView(mStatusDrawerLayout);
 	}
 	
+	@SuppressLint("InlinedApi")
 	@Override
 	public void onCreate() {
 		super.onCreate();
@@ -150,7 +140,6 @@ public class MainService extends Service implements OnTouchListener {
 		try {
 			isb.setSystemUiVisibility(0, 1);
 		} catch (RemoteException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}*/
 	
@@ -648,7 +637,6 @@ public class MainService extends Service implements OnTouchListener {
 
 	@Override
 	public IBinder onBind(Intent intent) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 

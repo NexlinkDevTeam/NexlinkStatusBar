@@ -28,19 +28,18 @@ public class NotifServNew extends NotificationListenerService implements Notific
             	    break;
                 case MSG_CANCEL_NOTIFICATION:
                 	NotificationItem ni = (NotificationItem) msg.obj;
-                	cancelNotification(ni.packageName, ni.tag, ni.notificationID);
+                	try{cancelNotification(ni.packageName, ni.tag, ni.notificationID);}catch(NullPointerException e){Log.e("NotifServNew", "Notifications not available! (Missing permission?)");}
                 	break;
                 case MSG_CANCEL_ALL_NOTIFICATIONS:
-                	cancelAllNotifications();
+                	try{cancelAllNotifications();}catch(NullPointerException e){Log.e("NotifServNew", "Notifications not available! (Missing permission?)");}
                 	break;
                 case MSG_GET_ACTIVE_NOTIFICATIONS:
             		//getExistingNotifications has to be called some time later or else it crashes
             		//https://code.google.com/p/android/issues/detail?id=59044
-							StatusBarNotification[] active = null;
+							StatusBarNotification[] active = new StatusBarNotification[0];
 							try{active = getActiveNotifications();}catch(NullPointerException e){Log.e("NotifServNew", "Notifications not available! (Missing permission?)");}
-							int length = active != null ? active.length : 0;
-							NotificationItem[] a = new NotificationItem[length];
-							for(int i = 0; i < length; i++){
+							NotificationItem[] a = new NotificationItem[active.length];
+							for(int i = 0; i < a.length; i++){
 								a[i] = new NotificationItem(notifServNew, active[i]);
 							}
 							Message m = new Message();

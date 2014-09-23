@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.nexlink.statusbar"
+    android:sharedUserId="com.nexlink"
     android:versionCode="20140127"
     android:versionName="20140127" >
 
@@ -29,8 +30,12 @@
     <application
         android:allowBackup="true"
         android:name=".App"
+        android:icon="@drawable/ic_launcher"
         android:label="Nexlink Status Bar"
         android:launchMode="singleTask" >
+        
+        <meta-data android:name="nexlink_mdm_settings" android:value="com.nexlink.statusbar/com.nexlink.statusbar.SettingsActivity" />
+        
         <service
             android:name=".MainService"
             android:label="Nexlink Status Bar">
@@ -84,11 +89,8 @@
         <activity
             android:name=".SettingsActivity"
             android:label="Status Bar Settings"
-            android:launchMode="singleInstance" >
-            <intent-filter >
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+            android:launchMode="singleInstance" 
+            android:exported="true">
         </activity>
         <activity
             android:name=".PackageSelectActivity"

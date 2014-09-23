@@ -8,10 +8,9 @@ import java.util.Map;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.preference.PreferenceManager;
 
 public class Prefs {
-	public static final String sharedprefsName = "statusbar_prefs";
-	
 	private Context mContext;
 	private SharedPreferences mSharedPrefs;
 	private Editor mEditor;
@@ -40,7 +39,7 @@ public class Prefs {
 	
 	public Prefs(Context context) {
 		mContext = context;
-		mSharedPrefs = mContext.getSharedPreferences(sharedprefsName, Context.MODE_PRIVATE);
+		mSharedPrefs = PreferenceManager.getDefaultSharedPreferences(mContext);
 		
 		notificationsEnabled = mSharedPrefs.getBoolean("notificationsEnabled", true);
 		notificationsWhitelisting = mSharedPrefs.getBoolean("notificationsWhitelisting", false);

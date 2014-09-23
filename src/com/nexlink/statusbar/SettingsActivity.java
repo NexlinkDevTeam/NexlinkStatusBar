@@ -26,7 +26,6 @@ public class SettingsActivity extends Activity {
 		@Override
 		public void onCreate(Bundle savedInstanceState) {
 			super.onCreate(savedInstanceState);
-			getPreferenceManager().setSharedPreferencesName(Prefs.sharedprefsName);
 			addPreferencesFromResource(R.xml.preferences);
 			findPreference("selectPackages").setOnPreferenceClickListener(new OnPreferenceClickListener() {
 				@Override
