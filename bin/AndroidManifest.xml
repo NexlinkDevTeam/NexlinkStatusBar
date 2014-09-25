@@ -95,5 +95,10 @@
         <activity
             android:name=".PackageSelectActivity"
             android:label="Select Packages" />
+        <receiver android:name=".GlobalPrefsReceiver" >
+            <intent-filter>
+                <action android:name="com.nexlink.GLOBAL_PREFS_CHANGED" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

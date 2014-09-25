@@ -8,7 +8,6 @@ import java.util.Map;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
-import android.preference.PreferenceManager;
 
 public class Prefs {
 	private Context mContext;
@@ -39,7 +38,8 @@ public class Prefs {
 	
 	public Prefs(Context context) {
 		mContext = context;
-		mSharedPrefs = PreferenceManager.getDefaultSharedPreferences(mContext);
+
+		mSharedPrefs = mContext.getSharedPreferences("com.nexlink.statusbar_preferences", Context.MODE_MULTI_PROCESS);
 		
 		notificationsEnabled = mSharedPrefs.getBoolean("notificationsEnabled", true);
 		notificationsWhitelisting = mSharedPrefs.getBoolean("notificationsWhitelisting", false);
