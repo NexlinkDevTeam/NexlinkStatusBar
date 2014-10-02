@@ -15,7 +15,7 @@ import android.os.SystemService;
 public class HomeActivity extends Activity{
 	private BroadcastReceiver mBootReceiver;
 	//Call through to the real home app
-	private void launchRealHome(){
+	private boolean launchRealHome(){
 		final Intent homeIntent = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME);
 	    final List<ResolveInfo> resolveInfo = getPackageManager().queryIntentActivities(homeIntent, 0);
 	    for (ResolveInfo info : resolveInfo) {
@@ -23,9 +23,10 @@ public class HomeActivity extends Activity{
 	        	Intent intent = new Intent();
 	        	intent.setComponent(new ComponentName(info.activityInfo.applicationInfo.packageName, info.activityInfo.name));
 	        	startActivity(intent);
-	        	break;
+	        	return true;
 	       }
 	    }
+	    return false;
 	}
 	@Override
 	public void onCreate(Bundle savedInstanceState){
@@ -35,16 +36,16 @@ public class HomeActivity extends Activity{
 	    	mBootReceiver = new BroadcastReceiver(){
 				@Override
 				public void onReceive(Context context, Intent intent) {
-					launchRealHome();
-					finish();
+					if(launchRealHome()){
+					    finish();
+					}
 				}
 			};
 			IntentFilter intentFilter = new IntentFilter();
 			intentFilter.addAction(Intent.ACTION_BOOT_COMPLETED);
 			registerReceiver(mBootReceiver, intentFilter);
 	    }
-	    else{
-	    	launchRealHome();
+	    else if(launchRealHome()){
 	    	finish();
 	    }
 	}
