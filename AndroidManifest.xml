@@ -33,9 +33,7 @@
         android:icon="@drawable/ic_launcher"
         android:label="Nexlink Status Bar"
         android:launchMode="singleTask" >
-        
-        <meta-data android:name="nexlink_mdm_settings" android:value="com.nexlink.statusbar/com.nexlink.statusbar.SettingsActivity" />
-        
+                
         <service
             android:name=".MainService"
             android:label="Nexlink Status Bar">
@@ -88,9 +86,13 @@
         </activity> 
         <activity
             android:name=".SettingsActivity"
-            android:label="Status Bar Settings"
+            android:label="Status Bar"
             android:launchMode="singleInstance" 
             android:exported="true">
+                        <intent-filter>
+                <action android:name="com.nexlink.action.LAUNCH_MDM_SETTINGS" />
+                <category android:name="com.nexlink.category.MDM_SETTINGS" />
+            </intent-filter>
         </activity>
         <activity
             android:name=".PackageSelectActivity"

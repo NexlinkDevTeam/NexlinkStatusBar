@@ -18,8 +18,8 @@ public class HomeActivity extends Activity{
 	private boolean launchRealHome(){
 		final Intent homeIntent = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME);
 	    final List<ResolveInfo> resolveInfo = getPackageManager().queryIntentActivities(homeIntent, 0);
-	    for (ResolveInfo info : resolveInfo) {
-	        if (info.activityInfo.applicationInfo.packageName != getPackageName()) {
+	    for(ResolveInfo info : resolveInfo) {
+	        if(!info.activityInfo.applicationInfo.packageName.equals(getPackageName())) {
 	        	Intent intent = new Intent();
 	        	intent.setComponent(new ComponentName(info.activityInfo.applicationInfo.packageName, info.activityInfo.name));
 	        	startActivity(intent);
