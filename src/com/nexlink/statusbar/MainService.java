@@ -57,7 +57,7 @@ import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.ToggleButton;
 
 public class MainService extends Service implements OnTouchListener {
-	private Prefs mPrefs;
+	private PrefsHelper mPrefs;
 
 	private Handler handler;
 	private StatusBar statusBar;

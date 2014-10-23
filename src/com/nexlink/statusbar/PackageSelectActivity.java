@@ -67,10 +67,7 @@ public class PackageSelectActivity extends Activity {
 		HashSet<String> enabled = new HashSet<String>();
 		enabled.addAll(mUserArrayAdapter.getEnabled());
 		enabled.addAll(mSystemArrayAdapter.getEnabled());
-		Intent intent = new Intent();
-		intent.setAction("com.nexlink.statusbar.PACKAGE_SELECT");
-		intent.putStringArrayListExtra("packageNames", new ArrayList<String>(enabled));
-		sendBroadcast(intent);
+		App.getPrefs().setNotificationSources(enabled);
 	}
 	
 	@Override

@@ -88,7 +88,7 @@ public class StatusDrawer {
 	}
 
 	private MainService mMainService;
-	private Prefs mPrefs;
+	private PrefsHelper mPrefs;
 	private RelativeLayout slidingDrawerLayout;
 	private SlidingDrawer slidingDrawer;
 	private TabHost tabHost;

@@ -3,6 +3,8 @@ package com.nexlink.statusbar;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.nexlink.utilites.SystemUtils;
+
 import android.Manifest;
 import android.app.Application;
 import android.content.ComponentName;
@@ -22,12 +24,12 @@ public class App extends Application{
 		return notificationService;
 	}
 	
-	private static Prefs mPrefs;
-	public static Prefs getPrefs(){
+	private static PrefsHelper mPrefs;
+	public static PrefsHelper getPrefs(){
 		return mPrefs;
 	}
-	public static Prefs reloadPrefs(Context context){
-		mPrefs = new Prefs(context);
+	public static PrefsHelper reloadPrefs(Context context){
+		mPrefs = new PrefsHelper(context);
 		return mPrefs;
 	}
 	@Override
@@ -71,20 +73,25 @@ public class App extends Application{
     	    packageManager.setComponentEnabledSetting(new ComponentName(this, NotifServNew.class), supportsNLS ? 1 : 2, PackageManager.DONT_KILL_APP);
     	}
 		
-    	String packageName = getPackageName();
-		
 		//Once we have permission, automatically add an entry in settings to allow receiving notifications
     	try{
 		    ContentResolver contentResolver = getContentResolver();
 		    notificationService = supportsNLS ? new NotifServNew() : new NotifServOld();
 		    String enabledSetting = supportsNLS ? "enabled_notification_listeners" : Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES;
 		    String enabledClasses = Settings.Secure.getString(contentResolver, enabledSetting);
-            String servicePath = packageName+"/"+packageName+(supportsNLS?".NotifServNew":".NotifServOldAcc");
-		    if ((enabledClasses == null || !enabledClasses.contains(servicePath)) && checkCallingOrSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS) == PackageManager.PERMISSION_GRANTED){
-			    Settings.Secure.putString(getContentResolver(), enabledSetting, enabledClasses == null || enabledClasses.isEmpty() ? servicePath : enabledClasses + ":" + servicePath);
-	    }
+            String servicePath = myPackageName+"/"+myPackageName+(supportsNLS?".NotifServNew":".NotifServOldAcc");
+		    if ((enabledClasses == null || !enabledClasses.contains(servicePath))){
+		    	if(checkCallingOrSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS) != PackageManager.PERMISSION_GRANTED){
+		    		SystemUtils.grantPermissions(myPackageName, new String[]{Manifest.permission.WRITE_SECURE_SETTINGS});
+		    	}
+		    	if(checkCallingOrSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS) == PackageManager.PERMISSION_GRANTED){
+			        Settings.Secure.putString(getContentResolver(), enabledSetting, enabledClasses == null || enabledClasses.isEmpty() ? servicePath : enabledClasses + ":" + servicePath);
+		    	}
+	        }
 		}
-		catch(Exception e){}
+		catch(Exception e){
+			System.out.println(e.getMessage());
+		}
 		
 		//Start the service
 		startService(new Intent(this, MainService.class));

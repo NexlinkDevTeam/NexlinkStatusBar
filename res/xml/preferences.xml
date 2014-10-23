@@ -116,10 +116,4 @@
              <Preference android:title="Restart"
                 android:key="restart"
                 android:summary="Tap here to restart with these settings"/>
-             <Preference android:title="Start"
-                android:key="start"
-                android:summary="Start the service"/>
-             <Preference android:title="Stop"
-                android:key="stop"
-                android:summary="Stop the service"/>
 </PreferenceScreen>         

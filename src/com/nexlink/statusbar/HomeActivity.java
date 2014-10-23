@@ -16,17 +16,29 @@ public class HomeActivity extends Activity{
 	private BroadcastReceiver mBootReceiver;
 	//Call through to the real home app
 	private boolean launchRealHome(){
-		final Intent homeIntent = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME);
-	    final List<ResolveInfo> resolveInfo = getPackageManager().queryIntentActivities(homeIntent, 0);
+	    //Start our own launcher if it's installed or else look for another one
+		List<ResolveInfo> resolveInfo = getPackageManager().queryIntentActivities(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME), 0);
+	    Intent launcherIntent = null;
 	    for(ResolveInfo info : resolveInfo) {
-	        if(!info.activityInfo.applicationInfo.packageName.equals(getPackageName())) {
-	        	Intent intent = new Intent();
-	        	intent.setComponent(new ComponentName(info.activityInfo.applicationInfo.packageName, info.activityInfo.name));
-	        	startActivity(intent);
-	        	return true;
-	       }
+            if(info.activityInfo.applicationInfo.packageName.equals("com.nexlink.launcher")) {
+        	    launcherIntent = new Intent();
+        	    launcherIntent.setComponent(new ComponentName(info.activityInfo.applicationInfo.packageName, info.activityInfo.name));
+        	    break;
+           }
+        }
+	    if(launcherIntent == null){
+	        for(ResolveInfo info : resolveInfo) {
+	            if(!info.activityInfo.applicationInfo.packageName.equals(getPackageName())) {
+	        	    launcherIntent = new Intent();
+	        	    launcherIntent.setComponent(new ComponentName(info.activityInfo.applicationInfo.packageName, info.activityInfo.name));
+	        	    break;
+	           }
+	        }
 	    }
-	    return false;
+	    if(launcherIntent != null){
+	    	startActivity(launcherIntent);
+	    }
+	    return launcherIntent != null;
 	}
 	@Override
 	public void onCreate(Bundle savedInstanceState){

@@ -26,7 +26,7 @@ import android.widget.TextView;
 
 public class StatusBar{
     private MainService mMainService;
-    private Prefs mPrefs;
+    private PrefsHelper mPrefs;
     private LinearLayout mStatusBarLayout;
     private TextView timeText, notificationText;
     private ImageView batteryIcon, signalIcon, wifiIcon, bluetoothIcon, volumeIcon, notificationIcon;
