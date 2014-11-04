@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import android.annotation.SuppressLint;
-import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
@@ -77,7 +75,6 @@ public class MainService extends Service implements OnTouchListener {
     private ServiceConnection mNLServiceConnection;
     
     //Views
-	private LinearLayout mOverlayLayout;
 	private LinearLayout mStatusBarLayout;
 	private RelativeLayout mStatusDrawerLayout;
 	
@@ -88,7 +85,6 @@ public class MainService extends Service implements OnTouchListener {
 	private BroadcastReceiver mRingerReceiver;
 	private BroadcastReceiver mTimeReceiver;
 	private BroadcastReceiver mAirplaneReceiver;
-	
 
 	private int getStatusBarHeight() {
 		int result = 0;
@@ -97,6 +93,19 @@ public class MainService extends Service implements OnTouchListener {
 			result = getResources().getDimensionPixelSize(resourceId);
 		}
 		return result;
+	}
+	
+	private WindowManager.LayoutParams generateBarLayoutParams(boolean visible, boolean lolipopLockScreen){
+		WindowManager.LayoutParams barLayoutParams = new WindowManager.LayoutParams();
+		barLayoutParams.flags = LayoutParams.FLAG_NOT_FOCUSABLE | LayoutParams.FLAG_LAYOUT_IN_SCREEN;
+		barLayoutParams.gravity = Gravity.LEFT | Gravity.TOP;
+		barLayoutParams.x = -1;
+		barLayoutParams.y = -1;
+		barLayoutParams.height = getStatusBarHeight() + (lolipopLockScreen ? 10 : 0);
+		barLayoutParams.width = LayoutParams.MATCH_PARENT;
+		barLayoutParams.format = visible ? PixelFormat.OPAQUE : PixelFormat.TRANSLUCENT;
+		barLayoutParams.type = LayoutParams.TYPE_SYSTEM_ERROR;
+		return barLayoutParams;
 	}
 	
 	@Override
@@ -111,7 +120,7 @@ public class MainService extends Service implements OnTouchListener {
 		if(mRingerReceiver != null) unregisterReceiver(mRingerReceiver);
 		if(mTimeReceiver != null) unregisterReceiver(mTimeReceiver);
 		if(mAirplaneReceiver != null) unregisterReceiver(mAirplaneReceiver);
-		if(mOverlayLayout != null) mWindowManager.removeView(mOverlayLayout);
+		if(mStatusBarLayout != null) mWindowManager.removeView(mStatusBarLayout);
 		if(mStatusBarLayout != null) mWindowManager.removeView(mStatusBarLayout);
 		if(mStatusDrawerLayout != null) mWindowManager.removeView(mStatusDrawerLayout);
 	}
@@ -120,28 +129,8 @@ public class MainService extends Service implements OnTouchListener {
 	@Override
 	public void onCreate() {
 		super.onCreate();
+		
 		mPrefs = App.reloadPrefs(this);
-		
-		/*
-		if(SystemUtils.isSystemApp(this, getPackageName())==0){
-			InstallUtils installer = new InstallUtils(this);
-			try {
-				installer.installRoot(new File(getPackageResourcePath()), true);
-				installer.uninstallRoot(getPackageName());
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			SystemUtils.restartVM();
-			return;
-		}
-		
-		
-		IStatusBarService isb = IStatusBarService.Stub.asInterface(ServiceManager.getService(Context.STATUS_BAR_SERVICE));
-		try {
-			isb.setSystemUiVisibility(0, 1);
-		} catch (RemoteException e1) {
-			e1.printStackTrace();
-		}*/
 	
 		handler = new Handler();
 		mWindowManager = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
@@ -157,41 +146,22 @@ public class MainService extends Service implements OnTouchListener {
 		
 		if(!mPrefs.generalEnabled){
 			if(mPrefs.generalOpenable){
+				//Nothing to do...
 			    stopSelf();
 			}
 			
-			else{
-				mOverlayLayout = new LinearLayout(this);
-				mOverlayLayout.setAlpha(0);
-				WindowManager.LayoutParams barLayoutParams = new WindowManager.LayoutParams();
-				barLayoutParams.flags = LayoutParams.FLAG_NOT_FOCUSABLE | LayoutParams.FLAG_LAYOUT_IN_SCREEN;
-				barLayoutParams.gravity = Gravity.LEFT | Gravity.TOP;
-				barLayoutParams.x = -1;
-				barLayoutParams.y = -1;
-				barLayoutParams.height = getStatusBarHeight();
-				barLayoutParams.width = LayoutParams.MATCH_PARENT;
-				barLayoutParams.format = PixelFormat.TRANSLUCENT;
-				barLayoutParams.type = LayoutParams.TYPE_SYSTEM_ERROR;
-				mOverlayLayout.setLayoutParams(barLayoutParams);
-				mOverlayLayout.setOnTouchListener(this);
-				mWindowManager.addView(mOverlayLayout, barLayoutParams);
+			else{ //Create an invisible overlay
+				mStatusBarLayout = new LinearLayout(this);
+				mStatusBarLayout.setAlpha(0);
+				mStatusBarLayout.setOnTouchListener(this);
+				mWindowManager.addView(mStatusBarLayout, generateBarLayoutParams(false, false));
 			}
 			return;
 		}
-
+		
+		//Create the standard status bar overlay
 		mStatusBarLayout = statusBar.getLayout();
 		mStatusDrawerLayout = statusDrawer.getLayout();
-		
-		WindowManager.LayoutParams barLayoutParams = new WindowManager.LayoutParams();
-		barLayoutParams.flags = LayoutParams.FLAG_NOT_FOCUSABLE | LayoutParams.FLAG_LAYOUT_IN_SCREEN;
-		barLayoutParams.gravity = Gravity.LEFT | Gravity.TOP;
-		barLayoutParams.x = -1;
-		barLayoutParams.y = -1;
-		barLayoutParams.height = getStatusBarHeight();
-		barLayoutParams.width = LayoutParams.MATCH_PARENT;
-		barLayoutParams.format = PixelFormat.OPAQUE;
-		barLayoutParams.type = LayoutParams.TYPE_SYSTEM_ERROR;
-		mStatusBarLayout.setLayoutParams(barLayoutParams);
 		mStatusBarLayout.setOnTouchListener(this);
 
 		WindowManager.LayoutParams drawerLayoutParams = new WindowManager.LayoutParams();
@@ -203,7 +173,7 @@ public class MainService extends Service implements OnTouchListener {
 
 		mWindowManager.addView(mStatusDrawerLayout, drawerLayoutParams);
 		mStatusDrawerLayout.setVisibility(View.GONE);
-		mWindowManager.addView(mStatusBarLayout, barLayoutParams);
+		mWindowManager.addView(mStatusBarLayout, generateBarLayoutParams(true, false));
 		
 	  //Doesn't work unless the fullscreen app calls set setSystemUiVisibility;
 	  /*mStatusBarLayout.setOnSystemUiVisibilityChangeListener(new OnSystemUiVisibilityChangeListener(){
@@ -221,7 +191,8 @@ public class MainService extends Service implements OnTouchListener {
 				}
 			}
 		});*/
-	
+		
+		//Use size changes in this dummy layout to detect full screen mode and react accordingly
 		class DummyLayout extends LinearLayout{
 			public DummyLayout(Context context) {
 				super(context);
@@ -239,14 +210,39 @@ public class MainService extends Service implements OnTouchListener {
 				Display display = wm.getDefaultDisplay();
 				Point size = new Point();
 				display.getSize(size);		
-				if(yNew == size.y){
+				if(yNew == size.y){ //Full screen
 					mStatusBarLayout.setVisibility(View.GONE);
 				}
 				else {
 					mStatusBarLayout.setVisibility(View.VISIBLE);
 				}
+				mStatusBarLayout.invalidate();
 		        super.onSizeChanged(xNew, yNew, xOld, yOld);
 		    }
+		}
+		
+		if(Build.VERSION.SDK_INT >= 21){
+		registerReceiver(new BroadcastReceiver(){
+			@Override
+			public void onReceive(Context arg0, Intent arg1) {
+				System.out.println("OFF");
+				mWindowManager.updateViewLayout(mStatusBarLayout, generateBarLayoutParams(true, true));
+			}}, new IntentFilter(Intent.ACTION_SCREEN_OFF));
+		
+		registerReceiver(new BroadcastReceiver(){
+			@Override
+			public void onReceive(Context arg0, Intent arg1) {
+				System.out.println("ON");
+				mWindowManager.updateViewLayout(mStatusBarLayout, generateBarLayoutParams(true, true));
+			}}, new IntentFilter(Intent.ACTION_SCREEN_ON));
+		
+		registerReceiver(new BroadcastReceiver(){
+			@Override
+			public void onReceive(Context arg0, Intent arg1) {
+				System.out.println("UNLOCK");
+				mWindowManager.updateViewLayout(mStatusBarLayout, generateBarLayoutParams(true, true));
+				mWindowManager.updateViewLayout(mStatusBarLayout, generateBarLayoutParams(true, false));
+			}}, new IntentFilter(Intent.ACTION_USER_PRESENT));
 		}
 		
 		final LinearLayout fullScreenCheckLayout = new DummyLayout(this);
@@ -264,7 +260,8 @@ public class MainService extends Service implements OnTouchListener {
 		fullScreenCheckLayout.setOnTouchListener(this);
 		fullScreenCheckLayout.setBackgroundColor(Color.MAGENTA);
 		mWindowManager.addView(fullScreenCheckLayout, fullScreenCheckLayoutParams);
-
+		
+		//Register the receivers for our status bar icons
 		registerReceiver(mTimeReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context c, Intent i) {
@@ -514,16 +511,7 @@ public class MainService extends Service implements OnTouchListener {
     			cancelAllNotifications();
     		}
     }
-    		
-       /* else if (!App.supportsNLS && checkCallingOrSelfPermission(Manifest.permission.ACCESS_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED){
-        	/* It seems the hidden implementation of NotificationListener was unfinished in Android 4.0.1, but can still clear
-    		 * notifications, so they don't clog up the system.
-    		 * http://grepcode.com/file/repository.grepcode.com/java/ext/com.google.android/android/4.0.1_r1/android/app/INotificationManager.java?av=f
-    		 * 
-    		 * 4.1.1 can also block notifications
-    		 * http://grepcode.com/file/repository.grepcode.com/java/ext/com.google.android/android/4.1.1_r1/android/app/INotificationManager.java?av=f
-    		 */
-        //}
+        
         
     		//Rotate the active activeNotifications every 5 seconds
     		handler.postDelayed(new Runnable() {
@@ -550,18 +538,8 @@ public class MainService extends Service implements OnTouchListener {
 
 	@Override
 	public void onConfigurationChanged(Configuration newConfig) {
-		super.onConfigurationChanged(newConfig);
-		//Send out a test notification
-
-		NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-		Notification.Builder ncomp = new Notification.Builder(this);
-		ncomp.setContentTitle("My Notification");
-		ncomp.setContentText("Notification Listener Service Example");
-		ncomp.setTicker("Really really really really really really long notification");
-		ncomp.setSmallIcon(R.drawable.ic_qs_signal_full_4g);
-		ncomp.setAutoCancel(true);
-		nm.notify((int) System.currentTimeMillis(), ncomp.getNotification());
-		//Stop the drawer from glitching when orientation is changed
+		super.onConfigurationChanged(newConfig);		
+		//Stops the drawer from glitching when orientation is changed
 		statusDrawer.resetDrawer();
 	}
 

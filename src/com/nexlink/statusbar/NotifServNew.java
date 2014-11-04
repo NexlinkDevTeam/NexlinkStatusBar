@@ -36,8 +36,11 @@ public class NotifServNew extends NotificationListenerService implements Notific
                 case MSG_GET_ACTIVE_NOTIFICATIONS:
             		//getExistingNotifications has to be called some time later or else it crashes
             		//https://code.google.com/p/android/issues/detail?id=59044
-							StatusBarNotification[] active = new StatusBarNotification[0];
+							StatusBarNotification[] active = null;
 							try{active = getActiveNotifications();}catch(Exception e){Log.e("NotifServNew", "Notifications not available! (Missing permission?)");}
+							if(active == null){
+								active = new StatusBarNotification[0];
+							}
 							NotificationItem[] a = new NotificationItem[active.length];
 							for(int i = 0; i < a.length; i++){
 								a[i] = new NotificationItem(notifServNew, active[i]);
