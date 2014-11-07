@@ -6,7 +6,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textColor="#FFFFFF"
-        android:textSize="12dp"
+        android:textSize="10dp"
         android:id="@+id/option_button"
         android:paddingTop="15dp"
         android:drawablePadding="15dp"/>

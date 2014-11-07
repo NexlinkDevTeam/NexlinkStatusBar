@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import android.annotation.SuppressLint;
+import android.app.KeyguardManager;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
@@ -69,6 +70,7 @@ public class MainService extends Service implements OnTouchListener {
     private AudioManager mAudioManager;
 	private TelephonyManager mTelephonyManager;
 	private LocationManager mLocationManager;
+	private KeyguardManager mKeyguardManager;
 
     private Messenger mToNLService;
     private Messenger mToMainService;
@@ -79,6 +81,7 @@ public class MainService extends Service implements OnTouchListener {
 	private RelativeLayout mStatusDrawerLayout;
 	
 	//Receivers
+	private BroadcastReceiver mLockScreenReceiver;
 	private BroadcastReceiver mWifiReceiver;
 	private BroadcastReceiver mBluetoothReceiver;
 	private BroadcastReceiver mBatteryReceiver;
@@ -95,15 +98,15 @@ public class MainService extends Service implements OnTouchListener {
 		return result;
 	}
 	
-	private WindowManager.LayoutParams generateBarLayoutParams(boolean visible, boolean lolipopLockScreen){
+	private WindowManager.LayoutParams generateBarLayoutParams(){
 		WindowManager.LayoutParams barLayoutParams = new WindowManager.LayoutParams();
 		barLayoutParams.flags = LayoutParams.FLAG_NOT_FOCUSABLE | LayoutParams.FLAG_LAYOUT_IN_SCREEN;
 		barLayoutParams.gravity = Gravity.LEFT | Gravity.TOP;
 		barLayoutParams.x = -1;
 		barLayoutParams.y = -1;
-		barLayoutParams.height = getStatusBarHeight() + (lolipopLockScreen ? 10 : 0);
+		barLayoutParams.height = getStatusBarHeight() + ((Build.VERSION.SDK_INT >= 21 && mKeyguardManager.isKeyguardLocked()) ? 10 : 0);
 		barLayoutParams.width = LayoutParams.MATCH_PARENT;
-		barLayoutParams.format = visible ? PixelFormat.OPAQUE : PixelFormat.TRANSLUCENT;
+		barLayoutParams.format = mPrefs.generalEnabled ? PixelFormat.OPAQUE : PixelFormat.TRANSLUCENT;
 		barLayoutParams.type = LayoutParams.TYPE_SYSTEM_ERROR;
 		return barLayoutParams;
 	}
@@ -114,6 +117,7 @@ public class MainService extends Service implements OnTouchListener {
 		super.onDestroy();
 		if(handler != null) handler.removeCallbacksAndMessages(null);
 		if(mNLServiceConnection != null) unbindService(mNLServiceConnection);
+		if(mLockScreenReceiver != null) unregisterReceiver(mLockScreenReceiver);
 		if(mWifiReceiver != null) unregisterReceiver(mWifiReceiver);
 		if(mBluetoothReceiver != null) unregisterReceiver(mBluetoothReceiver);
 		if(mBatteryReceiver != null) unregisterReceiver(mBatteryReceiver);
@@ -142,7 +146,8 @@ public class MainService extends Service implements OnTouchListener {
 		mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 		mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 		mConnectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-		mLocationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
+		mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+		mKeyguardManager = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
 		
 		if(!mPrefs.generalEnabled){
 			if(mPrefs.generalOpenable){
@@ -154,7 +159,7 @@ public class MainService extends Service implements OnTouchListener {
 				mStatusBarLayout = new LinearLayout(this);
 				mStatusBarLayout.setAlpha(0);
 				mStatusBarLayout.setOnTouchListener(this);
-				mWindowManager.addView(mStatusBarLayout, generateBarLayoutParams(false, false));
+				mWindowManager.addView(mStatusBarLayout, generateBarLayoutParams());
 			}
 			return;
 		}
@@ -173,7 +178,7 @@ public class MainService extends Service implements OnTouchListener {
 
 		mWindowManager.addView(mStatusDrawerLayout, drawerLayoutParams);
 		mStatusDrawerLayout.setVisibility(View.GONE);
-		mWindowManager.addView(mStatusBarLayout, generateBarLayoutParams(true, false));
+		mWindowManager.addView(mStatusBarLayout, generateBarLayoutParams());
 		
 	  //Doesn't work unless the fullscreen app calls set setSystemUiVisibility;
 	  /*mStatusBarLayout.setOnSystemUiVisibilityChangeListener(new OnSystemUiVisibilityChangeListener(){
@@ -221,30 +226,6 @@ public class MainService extends Service implements OnTouchListener {
 		    }
 		}
 		
-		if(Build.VERSION.SDK_INT >= 21){
-		registerReceiver(new BroadcastReceiver(){
-			@Override
-			public void onReceive(Context arg0, Intent arg1) {
-				System.out.println("OFF");
-				mWindowManager.updateViewLayout(mStatusBarLayout, generateBarLayoutParams(true, true));
-			}}, new IntentFilter(Intent.ACTION_SCREEN_OFF));
-		
-		registerReceiver(new BroadcastReceiver(){
-			@Override
-			public void onReceive(Context arg0, Intent arg1) {
-				System.out.println("ON");
-				mWindowManager.updateViewLayout(mStatusBarLayout, generateBarLayoutParams(true, true));
-			}}, new IntentFilter(Intent.ACTION_SCREEN_ON));
-		
-		registerReceiver(new BroadcastReceiver(){
-			@Override
-			public void onReceive(Context arg0, Intent arg1) {
-				System.out.println("UNLOCK");
-				mWindowManager.updateViewLayout(mStatusBarLayout, generateBarLayoutParams(true, true));
-				mWindowManager.updateViewLayout(mStatusBarLayout, generateBarLayoutParams(true, false));
-			}}, new IntentFilter(Intent.ACTION_USER_PRESENT));
-		}
-		
 		final LinearLayout fullScreenCheckLayout = new DummyLayout(this);
 		fullScreenCheckLayout.setAlpha(1);
 		LayoutParams fullScreenCheckLayoutParams = new WindowManager.LayoutParams();
@@ -262,6 +243,15 @@ public class MainService extends Service implements OnTouchListener {
 		mWindowManager.addView(fullScreenCheckLayout, fullScreenCheckLayoutParams);
 		
 		//Register the receivers for our status bar icons
+		IntentFilter screenIntents = new IntentFilter(Intent.ACTION_SCREEN_OFF);
+		screenIntents.addAction(Intent.ACTION_SCREEN_ON);
+		screenIntents.addAction(Intent.ACTION_USER_PRESENT);
+		registerReceiver(mLockScreenReceiver = new BroadcastReceiver(){
+			@Override
+			public void onReceive(Context arg0, Intent arg1) {
+				mWindowManager.updateViewLayout(mStatusBarLayout, generateBarLayoutParams());
+			}}, screenIntents);
+		
 		registerReceiver(mTimeReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context c, Intent i) {
@@ -334,25 +324,23 @@ public class MainService extends Service implements OnTouchListener {
         }, PhoneStateListener.LISTEN_SIGNAL_STRENGTHS);
 	
 
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
-        filter.addAction(BluetoothAdapter.ACTION_CONNECTION_STATE_CHANGED);
-
+        IntentFilter bluetoothIntents = new IntentFilter();
+        bluetoothIntents.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
+        bluetoothIntents.addAction(BluetoothAdapter.ACTION_CONNECTION_STATE_CHANGED);
         registerReceiver(mBluetoothReceiver = new BroadcastReceiver(){
 			@Override
 			public void onReceive(Context context, Intent intent) {
 				statusBar.setBluetooth(intent);
 				statusDrawer.setBluetooth(intent);
 			}
-        }, filter);
+        }, bluetoothIntents);
         statusBar.setBluetooth(new Intent().setAction(BluetoothAdapter.ACTION_STATE_CHANGED));
 		statusDrawer.setBluetooth(new Intent().setAction(BluetoothAdapter.ACTION_STATE_CHANGED));
              
-        filter = new IntentFilter();
-        filter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
-        filter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
-        filter.addAction(WifiManager.RSSI_CHANGED_ACTION);
-        
+        IntentFilter wifiFilter = new IntentFilter();
+        wifiFilter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
+        wifiFilter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
+        wifiFilter.addAction(WifiManager.RSSI_CHANGED_ACTION);
         registerReceiver(mWifiReceiver = new BroadcastReceiver(){
 			@Override
             public void onReceive(Context context, Intent intent) {
@@ -373,8 +361,7 @@ public class MainService extends Service implements OnTouchListener {
                 statusBar.setWifi(level);
                 statusDrawer.setWifi(level, ssid);
             }
-        }, filter);
-        
+        }, wifiFilter);
         
         LocationListener x = new LocationListener(){
         	public int getState(){

@@ -68,7 +68,7 @@ public class StatusBar{
         batteryIcon = (ImageView) mStatusBarLayout.findViewById(R.id.battery_icon); 
         timeText = (TextView) mStatusBarLayout.findViewById(R.id.time_text);
         timeText.setText(new SimpleDateFormat("h:mm aa").format(System.currentTimeMillis()));
-        
+
         notificationText.setSelected(true);
 
         if(!mPrefs.iconsTime) timeText.setVisibility(View.GONE);
