@@ -43,9 +43,11 @@ public class StatusBar{
     }
     
     public void setTickerNotification(NotificationItem ni){
-    	tickerNotification = ni;
-    	notificationText.setText(ni.tickerText);
-    	notificationIcon.setImageDrawable(ni.iconDrawable);
+    	if(ni != null){
+    	    tickerNotification = ni;
+    	    notificationText.setText(ni.tickerText);
+    	    notificationIcon.setImageDrawable(ni.iconDrawable);
+    	}
     }
     
     public NotificationItem getTickerNotification(){

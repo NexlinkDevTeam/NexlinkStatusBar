@@ -15,7 +15,7 @@ import android.os.SystemService;
 public class HomeActivity extends Activity{
 	private BroadcastReceiver mBootReceiver;
 	//Call through to the real home app
-	private boolean launchRealHome(){
+	private boolean launchRealHome(){System.out.println("LAUNCHING REAL HOME");
 	    //Start our own launcher if it's installed or else look for another one
 		List<ResolveInfo> resolveInfo = getPackageManager().queryIntentActivities(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME), 0);
 	    Intent launcherIntent = null;
@@ -36,6 +36,7 @@ public class HomeActivity extends Activity{
 	        }
 	    }
 	    if(launcherIntent != null){
+	    	launcherIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK).addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
 	    	startActivity(launcherIntent);
 	    }
 	    return launcherIntent != null;

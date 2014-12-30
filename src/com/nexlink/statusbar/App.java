@@ -36,7 +36,6 @@ public class App extends Application{
 	public void onCreate(){
 		//Load saved prefs
 		mPrefs = reloadPrefs(this);
-		
 	    /*
 	     * Check if this is the default home app and prompt to set it if it's not
 	     * It needs to be set as the home app in order to start immediately on boot

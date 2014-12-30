@@ -12,7 +12,6 @@ import android.content.SharedPreferences.Editor;
 public class PrefsHelper {
 	private Context mContext;
 	private SharedPreferences mSharedPrefs;
-	private Editor mEditor;
 	
 	public boolean notificationsEnabled;
 	public boolean notificationsWhitelisting;
@@ -65,17 +64,17 @@ public class PrefsHelper {
 	}
 	
 	public void setNotificationSources(HashSet<String> h) {
-		mEditor.putStringSet("notificationSources", h).apply();
+		mSharedPrefs.edit().putStringSet("notificationSources", h).apply();
 	}
 	public HashSet<String> getNotificationSources() {
 		return (HashSet<String>) mSharedPrefs.getStringSet("notificationSources", new HashSet<String>());
 	}
 	
 	public void saveNotification(NotificationItem ni){
-		mEditor.putString("N_"+ni.packageName+ni.notificationID, ni.stringify()).apply();
+		mSharedPrefs.edit().putString("N_"+ni.packageName+ni.notificationID, ni.stringify()).apply();
 	}
 	public void deleteNotification(NotificationItem ni){
-		mEditor.remove("N_"+ni.packageName+ni.notificationID).apply();
+		mSharedPrefs.edit().remove("N_"+ni.packageName+ni.notificationID).apply();
 	}
 	public NotificationItem[] getSavedNotifications(){
 		List<NotificationItem> ni = new ArrayList<NotificationItem>();
@@ -93,7 +92,7 @@ public class PrefsHelper {
 		for(Map.Entry<String,?> entry : keys.entrySet()){
 			String key = entry.getKey();
 			if(key.indexOf("N_") == 0){
-				mEditor.remove(key).apply();
+				mSharedPrefs.edit().remove(key).apply();
 			}
 		 }
 	}

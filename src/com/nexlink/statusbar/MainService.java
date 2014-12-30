@@ -125,7 +125,6 @@ public class MainService extends Service implements OnTouchListener {
 		if(mTimeReceiver != null) unregisterReceiver(mTimeReceiver);
 		if(mAirplaneReceiver != null) unregisterReceiver(mAirplaneReceiver);
 		if(mStatusBarLayout != null) mWindowManager.removeView(mStatusBarLayout);
-		if(mStatusBarLayout != null) mWindowManager.removeView(mStatusBarLayout);
 		if(mStatusDrawerLayout != null) mWindowManager.removeView(mStatusDrawerLayout);
 	}
 	

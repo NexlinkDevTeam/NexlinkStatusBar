@@ -23,7 +23,7 @@ public class PackageItemAdapter extends ArrayAdapter < ApplicationInfo > {
 
 	public PackageItemAdapter(Context context) {
 		super(context, R.layout.package_list_item);
-		mEnabledSet = new HashSet < String > ();
+		mEnabledSet = new HashSet <String> ();
 		mPackageManager = context.getPackageManager();
 		mLayoutInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 	}
