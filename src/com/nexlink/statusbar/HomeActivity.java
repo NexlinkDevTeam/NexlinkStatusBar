@@ -15,31 +15,42 @@ import android.os.SystemService;
 public class HomeActivity extends Activity{
 	private BroadcastReceiver mBootReceiver;
 	//Call through to the real home app
-	private boolean launchRealHome(){System.out.println("LAUNCHING REAL HOME");
+	private boolean startLaunchApp(){
+	    final PrefsHelper prefs = App.getPrefs();
+	    Intent launchAppIntent = null;
+	    for(String pkg : prefs.launchApps){
+	    	System.out.println(pkg);
+	    	launchAppIntent = getPackageManager().getLaunchIntentForPackage(pkg);
+	    	if(launchAppIntent != null){
+	    	    launchAppIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK).addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+	    	    startActivity(launchAppIntent);
+	    	}
+	    }
+	    if(launchAppIntent == null){
 	    //Start our own launcher if it's installed or else look for another one
 		List<ResolveInfo> resolveInfo = getPackageManager().queryIntentActivities(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME), 0);
-	    Intent launcherIntent = null;
 	    for(ResolveInfo info : resolveInfo) {
             if(info.activityInfo.applicationInfo.packageName.equals("com.nexlink.launcher")) {
-        	    launcherIntent = new Intent();
-        	    launcherIntent.setComponent(new ComponentName(info.activityInfo.applicationInfo.packageName, info.activityInfo.name));
+        	    launchAppIntent = new Intent();
+        	    launchAppIntent.setComponent(new ComponentName(info.activityInfo.applicationInfo.packageName, info.activityInfo.name));
         	    break;
            }
         }
-	    if(launcherIntent == null){
+	    if(launchAppIntent == null){
 	        for(ResolveInfo info : resolveInfo) {
 	            if(!info.activityInfo.applicationInfo.packageName.equals(getPackageName())) {
-	        	    launcherIntent = new Intent();
-	        	    launcherIntent.setComponent(new ComponentName(info.activityInfo.applicationInfo.packageName, info.activityInfo.name));
+	        	    launchAppIntent = new Intent();
+	        	    launchAppIntent.setComponent(new ComponentName(info.activityInfo.applicationInfo.packageName, info.activityInfo.name));
 	        	    break;
 	           }
 	        }
 	    }
-	    if(launcherIntent != null){
-	    	launcherIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK).addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-	    	startActivity(launcherIntent);
+	    if(launchAppIntent != null){
+	    	launchAppIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK).addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+	    	startActivity(launchAppIntent);
 	    }
-	    return launcherIntent != null;
+	    }
+	    return launchAppIntent != null;
 	}
 	@Override
 	public void onCreate(Bundle savedInstanceState){
@@ -49,7 +60,7 @@ public class HomeActivity extends Activity{
 	    	mBootReceiver = new BroadcastReceiver(){
 				@Override
 				public void onReceive(Context context, Intent intent) {
-					if(launchRealHome()){
+					if(startLaunchApp()){
 					    finish();
 					}
 				}
@@ -58,7 +69,7 @@ public class HomeActivity extends Activity{
 			intentFilter.addAction(Intent.ACTION_BOOT_COMPLETED);
 			registerReceiver(mBootReceiver, intentFilter);
 	    }
-	    else if(launchRealHome()){
+	    else if(startLaunchApp()){
 	    	finish();
 	    }
 	}

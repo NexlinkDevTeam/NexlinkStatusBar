@@ -1,11 +1,9 @@
 package com.nexlink.statusbar;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -24,9 +22,14 @@ public class PackageSelectActivity extends Activity {
 	private PackageItemAdapter mUserArrayAdapter;
 	private PackageItemAdapter mSystemArrayAdapter;
 	
+	private String mMode;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		
+		mMode = this.getIntent().getStringExtra("MODE");
+		
 		setContentView(R.layout.activity_package_select);
 		
 		mTabHost = (TabHost) findViewById(R.id.tabhost);
@@ -43,7 +46,13 @@ public class PackageSelectActivity extends Activity {
 		PackageManager pm = getPackageManager();
 		List<PackageInfo> list = pm.getInstalledPackages(0);
 
-		HashSet<String> enabled = App.getPrefs().getNotificationSources();
+		HashSet<String> enabled = new HashSet<String>();
+		if("LAUNCH".compareTo(mMode) == 0){
+			enabled = App.getPrefs().getLaunchApps();
+		}
+		else if("NOTIFICATIONS".compareTo(mMode) == 0){
+			enabled = App.getPrefs().getNotificationSources();
+		}
 
 		for(PackageInfo pi : list) {	
 		    ApplicationInfo ai = null;
@@ -67,7 +76,13 @@ public class PackageSelectActivity extends Activity {
 		HashSet<String> enabled = new HashSet<String>();
 		enabled.addAll(mUserArrayAdapter.getEnabled());
 		enabled.addAll(mSystemArrayAdapter.getEnabled());
-		App.getPrefs().setNotificationSources(enabled);
+		
+		if("LAUNCH".compareTo(mMode) == 0){
+			App.getPrefs().setLaunchApps(enabled);
+		}
+		else if("NOTIFICATIONS".compareTo(mMode) == 0){
+			App.getPrefs().setNotificationSources(enabled);
+		}
 	}
 	
 	@Override

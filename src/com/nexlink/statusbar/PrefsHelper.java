@@ -7,12 +7,12 @@ import java.util.Map;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 
 public class PrefsHelper {
 	private Context mContext;
 	private SharedPreferences mSharedPrefs;
 	
+	public HashSet<String> launchApps;
 	public boolean notificationsEnabled;
 	public boolean notificationsWhitelisting;
 	public HashSet<String> notificationsSources;
@@ -26,6 +26,7 @@ public class PrefsHelper {
 	public boolean optionsLocation;
 	public boolean optionsAirplane;
 	public boolean optionsSettings;
+	public boolean optionsMDM;
 	public boolean iconsTime;
 	public boolean iconsBattery;
 	public boolean iconsNotification;
@@ -40,6 +41,7 @@ public class PrefsHelper {
 
 		mSharedPrefs = mContext.getSharedPreferences("com.nexlink.statusbar_preferences", Context.MODE_MULTI_PROCESS);
 		
+		launchApps = (HashSet<String>) mSharedPrefs.getStringSet("launchApps", new HashSet<String>());
 		notificationsEnabled = mSharedPrefs.getBoolean("notificationsEnabled", true);
 		notificationsWhitelisting = mSharedPrefs.getBoolean("notificationsWhitelisting", false);
 		notificationsSources = (HashSet<String>) mSharedPrefs.getStringSet("notificationsSources", new HashSet<String>());
@@ -53,6 +55,7 @@ public class PrefsHelper {
 		optionsLocation = mSharedPrefs.getBoolean("optionsLocation", true);
 		optionsAirplane = mSharedPrefs.getBoolean("optionsAirplane", true);
 		optionsSettings = mSharedPrefs.getBoolean("optionsSettings", true);
+		optionsMDM = mSharedPrefs.getBoolean("optionsMDM", true);
 		iconsTime = mSharedPrefs.getBoolean("iconsTime", true);
 		iconsBattery = mSharedPrefs.getBoolean("iconsBattery", true);
 		iconsNotification = mSharedPrefs.getBoolean("iconsNotification", true);
@@ -61,6 +64,13 @@ public class PrefsHelper {
 		iconsSignal = mSharedPrefs.getBoolean("iconsSignal", true);
 		iconsVolume = mSharedPrefs.getBoolean("iconsVolume", true);
 		iconsLocation = mSharedPrefs.getBoolean("iconsLocation", true);
+	}
+	
+	public void setLaunchApps(HashSet<String> h) {
+		mSharedPrefs.edit().putStringSet("launchApps", h).apply();
+	}
+	public HashSet<String> getLaunchApps() {
+		return (HashSet<String>) mSharedPrefs.getStringSet("launchApps", new HashSet<String>());
 	}
 	
 	public void setNotificationSources(HashSet<String> h) {

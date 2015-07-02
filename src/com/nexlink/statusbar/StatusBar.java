@@ -1,7 +1,7 @@
 package com.nexlink.statusbar;
 
 import java.text.SimpleDateFormat;
-
+import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
@@ -24,13 +24,14 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+@SuppressLint({ "SimpleDateFormat", "InflateParams" })
 public class StatusBar{
     private MainService mMainService;
     private PrefsHelper mPrefs;
     private LinearLayout mStatusBarLayout;
     private TextView timeText, notificationText;
+    //Let's not redraw these if we don't have to
     private ImageView batteryIcon, signalIcon, wifiIcon, bluetoothIcon, volumeIcon, notificationIcon;
-  //Let's not redraw these if we don't have to
     private int signalTypeID = 0;
     private int signalStrengthID = R.drawable.stat_sys_signal_null;
     private int wifiIconID = R.drawable.stat_sys_wifi_signal_null;
@@ -54,7 +55,7 @@ public class StatusBar{
     	return tickerNotification;
     }
     
-    public StatusBar(MainService ms){
+	public StatusBar(MainService ms){
         mMainService = ms;
         mPrefs = App.getPrefs();
         		

@@ -1,7 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
     <PreferenceCategory
-            android:title="General">            
+        android:title="Launch Apps"
+        >
+        <Preference 
+                android:title="Choose Launch Apps"
+                android:key="selectLaunchApps"
+                android:summary="Tap here to choose apps to run on launch"/>
+    </PreferenceCategory>
+    <PreferenceCategory 
+        android:title="Status Bar">            
         <CheckBoxPreference
                 android:key="generalEnabled"
                 android:defaultValue="true"
@@ -29,7 +37,7 @@
                 android:summary="Allow only selected apps to display notifications"/>
         <Preference 
                 android:title="Choose Apps"
-                android:key="selectPackages"
+                android:key="selectNotificationApps"
                 android:dependency="notificationsWhitelisting"
                 android:summary="Tap here to choose which apps can display notifications"/>
     </PreferenceCategory>
@@ -110,7 +118,11 @@
          <CheckBoxPreference
                 android:key="optionsSettings"
                 android:defaultValue="true"
-                android:title="All Settings"/>
+                android:title="Android Settings"/>
+         <CheckBoxPreference
+                android:key="optionsMDM"
+                android:defaultValue="true"
+                android:title="MDM Settings"/>
         </PreferenceScreen>
     </PreferenceCategory>
              <Preference android:title="Restart"

@@ -95,15 +95,17 @@ public class StatusDrawer {
 	private ListView notificationsListView;
 	private NotificationItemAdapter notificationsListAdapter;
 	
+	
+	private StatusDrawerOptionAdapter SDOIAdapter;
 	private StatusDrawerOptionItem wifiSDOI;
 	private StatusDrawerOptionItem bluetoothSDOI;
-	private StatusDrawerOptionAdapter SDOIAdapter;
 	private StatusDrawerOptionItem displaySDOI;
 	private StatusDrawerOptionItem signalSDOI;
 	private StatusDrawerOptionItem batterySDOI;
 	private StatusDrawerOptionItem locationSDOI;
 	private StatusDrawerOptionItem settingsSDOI;
 	private StatusDrawerOptionItem airplaneSDOI;
+	private StatusDrawerOptionItem mdmSDOI;
 	
 	@SuppressLint("InflateParams")
 	public StatusDrawer(MainService ms) {
@@ -327,11 +329,11 @@ public class StatusDrawer {
 					//Settings.Global.putInt(cr, Settings.Global.AIRPLANE_MODE_ON, isEnabled ? 0 : 1);
 				}
 				
-				 /*
-	        	    * Not sure if this is possible for an unsigned app. Setting the app as persistent supposedly allows you
-	        	    * to send system broadcasts, but I have not been able to get it to work
-	        	    * http://androidforums.com/application-development/397247-notifying-other-applications-newly-installed-application.html
-	        	    */
+				   /*
+	        	   * Not sure if this is possible for an unsigned app. Setting the app as persistent supposedly allows you
+	        	   * to send system broadcasts, but I have not been able to get it to work
+	        	   * http://androidforums.com/application-development/397247-notifying-other-applications-newly-installed-application.html
+	        	   */
 	        	   //Intent pendingIntent = new Intent(Intent.ACTION_AIRPLANE_MODE_CHANGED);
 		           //pendingIntent.putExtra("state", !isEnabled);
 		           //mMainService.sendBroadcast(pendingIntent);
@@ -366,7 +368,7 @@ public class StatusDrawer {
 			}	
 		});
 		
-		settingsSDOI = new StatusDrawerOptionItem(mMainService.getResources().getDrawable(R.drawable.ic_qs_settings), null, "Settings", new OnClickListener(){
+		settingsSDOI = new StatusDrawerOptionItem(mMainService.getResources().getDrawable(R.drawable.ic_qs_settings), null, "Android Settings", new OnClickListener(){
 			@Override
 			public void onClick(View arg0) {
 				mMainService.startActivity(new Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
@@ -377,6 +379,22 @@ public class StatusDrawer {
 			public boolean onLongClick(View arg0) {
 				mMainService.startActivity(new Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 		    	slidingDrawer.close();
+				return true;
+			}
+		});
+		
+		final Intent intentMDMControlPanel = mMainService.getPackageManager().getLaunchIntentForPackage("com.nexlink.mdmcontrolpanel");
+		mdmSDOI = new StatusDrawerOptionItem(mMainService.getResources().getDrawable(R.drawable.ic_qs_settings), null, "MDM Settings", new OnClickListener(){
+			@Override
+			public void onClick(View arg0) {
+				mMainService.startActivity(intentMDMControlPanel);
+				slidingDrawer.close();
+			}
+		}, new OnLongClickListener(){
+			@Override
+			public boolean onLongClick(View arg0) {
+				mMainService.startActivity(intentMDMControlPanel);
+				slidingDrawer.close();
 				return true;
 			}
 		});
@@ -392,6 +410,7 @@ public class StatusDrawer {
 		if(mPrefs.optionsLocation) SDOIAdapter.add(locationSDOI);
 		if(mPrefs.optionsAirplane) SDOIAdapter.add(airplaneSDOI);
 		if(mPrefs.optionsSettings) SDOIAdapter.add(settingsSDOI);
+		if(intentMDMControlPanel != null && mPrefs.optionsMDM) SDOIAdapter.add(mdmSDOI);
 		gridView.setAdapter(SDOIAdapter);
 
 		SDOIAdapter.notifyDataSetChanged();

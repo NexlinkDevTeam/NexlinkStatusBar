@@ -16,10 +16,21 @@ public class SettingsActivity extends Activity {
 		public void onCreate(Bundle savedInstanceState) {
 			super.onCreate(savedInstanceState);
 			addPreferencesFromResource(R.xml.preferences);
-			findPreference("selectPackages").setOnPreferenceClickListener(new OnPreferenceClickListener() {
+			findPreference("selectLaunchApps").setOnPreferenceClickListener(new OnPreferenceClickListener() {
 				@Override
 				public boolean onPreferenceClick(Preference arg0) {
-					startActivity(new Intent(mContext, PackageSelectActivity.class));
+					Intent i = new Intent(mContext, PackageSelectActivity.class);
+					i.putExtra("MODE", "LAUNCH");
+					startActivity(i);
+					return true;
+				}
+			});
+			findPreference("selectNotificationApps").setOnPreferenceClickListener(new OnPreferenceClickListener() {
+				@Override
+				public boolean onPreferenceClick(Preference arg0) {
+					Intent i = new Intent(mContext, PackageSelectActivity.class);
+					i.putExtra("MODE", "NOTIFICATION");
+					startActivity(i);
 					return true;
 				}
 			});
